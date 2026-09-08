@@ -616,7 +616,7 @@
       <div class="card-head">
         <div>
           <h2 class="card-title">매출 · 광고비 추이</h2>
-          <p class="card-desc" id="c24TrendDesc">자사몰(CAFE24)에 매핑된 광고 소재 기준 일별 광고비와 매출(결제금액(+vat) 기준).</p>
+          <p class="card-desc" id="c24TrendDesc">자사몰(CAFE24)에 매핑된 광고 소재 기준 일별 광고비와 매출(결제금액(-vat) 기준).</p>
         </div>
       </div>
       <div class="chart-shell" id="c24TrendShell">
@@ -664,7 +664,7 @@
       <div class="card-head">
         <div>
           <h2 class="card-title">제품별 광고비 · 매출 · ROAS</h2>
-          <p class="card-desc" id="c24TableDesc">자사몰(CAFE24)에 매핑된 광고 소재만 집계 — 캠페인/광고세트/광고명에서 제품을 키워드로 추정합니다. 매출은 결제금액(+vat) 기준.</p>
+          <p class="card-desc" id="c24TableDesc">자사몰(CAFE24)에 매핑된 광고 소재만 집계 — 캠페인/광고세트/광고명에서 제품을 키워드로 추정합니다. 매출은 결제금액(-vat) 기준.</p>
         </div>
       </div>
       <div class="tbl-scroll"><table id="c24ProductTable"></table></div>
@@ -673,10 +673,9 @@
     <section class="card">
       <div class="card-head">
         <div>
-          <h2 class="card-title">기간별 위너 소재</h2>
-          <p class="card-desc" id="winnerDesc">광고비 상위 소재 중 전환값 순위.</p>
+          <h2 class="card-title">위너 소재</h2>
+          <p class="card-desc" id="winnerDesc">광고비 상위 소재 중 전환값 순위. 상단에서 선택한 기간을 그대로 따릅니다.</p>
         </div>
-        <select class="month-select" id="winnerMonthSel"></select>
       </div>
       <div class="seg" id="winnerChannelSeg" style="margin-bottom:12px;"></div>
       <div class="tbl-scroll"><table id="winnerTable"></table></div>
@@ -686,7 +685,7 @@
   <footer class="notes">
     <b>데이터 안내</b>
     <ul>
-      <li>매출은 매출_RAW_CLEAN 탭의 거래건별 원본(44,400건)을 일자·채널별로 집계했으며, <b>결제금액(+vat)</b>(부가세를 제외한 공급가 기준) 컬럼을 사용합니다 — 고객이 실제 결제한 금액(결제금액)과는 다릅니다.</li>
+      <li>매출은 매출_RAW_CLEAN 탭의 거래건별 원본(44,400건)을 일자·채널별로 집계했으며, <b>결제금액(-vat)</b>(부가세를 제외한 공급가 기준) 컬럼을 사용합니다 — 고객이 실제 결제한 금액(결제금액)과는 다릅니다.</li>
       <li>판매수량은 제품수량_RAW_CLEAN 탭 원본(53,586건)을 기준으로 하며, 22개 SKU 중 KPI구분이 핵심제품인 6종(EMS 미니스팟·아치스본 스포츠/슬리퍼/밸런스·바디괄사 세럼·클리어풋 제로 파우더)만 추이 차트에 표시합니다.</li>
       <li>광고 성과는 바르너_광고소재 탭의 소재·일자별 원본(154,639건)을 매체·일자별로 집계했으며, 전환값은 각 매체 픽셀이 추적한 구매 전환 가치로 실제 매출과 100% 일치하지 않을 수 있습니다. 목표매출·예산 대비 집행률 등은 원본 시트에 없습니다.</li>
       <li>매출·판매수량·광고 성과 모두 원본 시트가 매일 최신화되면 이 대시보드도 링크 공유(뷰어) 상태를 통해 자동으로 다시 집계할 수 있습니다.</li>
@@ -709,6 +708,7 @@ const FULL = {
   abcDaily: DATA.ads_by_channel.daily_series,
   cafe24Ad: DATA.cafe24.ad_daily,
   cafe24Rev: DATA.cafe24.revenue_daily,
+  creativeDaily: DATA.cafe24.creative_winners.daily,
 };
 const FULL_START = FULL.daily[0].date;
 const FULL_END = FULL.daily[FULL.daily.length-1].date;
@@ -843,6 +843,7 @@ function applyFilters(){
   renderAdChannelRankList();
   renderAdEfficiencyTable();
   renderCafe24Tab();
+  renderWinnerTable();
 }
 
 /* ---------------- 필터바 UI 배선 ---------------- */
@@ -1397,8 +1398,8 @@ function productRevenueItems(month){
   function update(){
     const month = sel.value;
     document.getElementById('prodRevDesc').textContent = month==='all'
-      ? `${FULL_START} ~ ${FULL_END} 누적, 결제금액(+vat) 기준 · 단일 제품코드로 매핑된 거래만 제품별로 집계되며 나머지는 미매핑으로 표시됩니다.`
-      : `2026년 ${fmtMonth(month)} 기준, 결제금액(+vat) 기준 · 단일 제품코드로 매핑된 거래만 제품별로 집계되며 나머지는 미매핑으로 표시됩니다.`;
+      ? `${FULL_START} ~ ${FULL_END} 누적, 결제금액(-vat) 기준 · 단일 제품코드로 매핑된 거래만 제품별로 집계되며 나머지는 미매핑으로 표시됩니다.`
+      : `2026년 ${fmtMonth(month)} 기준, 결제금액(-vat) 기준 · 단일 제품코드로 매핑된 거래만 제품별로 집계되며 나머지는 미매핑으로 표시됩니다.`;
     renderRankList('prodRevList', productRevenueItems(month));
   }
   sel.addEventListener('change', update);
@@ -1908,21 +1909,11 @@ function renderAdEfficiencyTable(){
 renderAdEfficiencyTable();
 
 /* ---------------- 기간별/월별 위너 소재 ---------------- */
-(function initWinnerTable(){
+const WINNER_CH_LABEL = { ALL:'전체', FACEBOOK:'Meta(Facebook)', GOOGLE_ADS:'Google Ads', TIKTOK:'틱톡' };
+let winnerActiveChannel = 'ALL';
+(function wireWinnerChannelSeg(){
   const cw = DATA.cafe24.creative_winners;
-  const WINNER_CH_LABEL = { ALL:'전체', FACEBOOK:'Meta(Facebook)', GOOGLE_ADS:'Google Ads', TIKTOK:'틱톡' };
-  const sel = document.getElementById('winnerMonthSel');
-  const optAll = document.createElement('option'); optAll.value='all'; optAll.textContent='전체 기간';
-  sel.appendChild(optAll);
-  const allMonths = new Set();
-  cw.channels.forEach(ch=>{ Object.keys(cw.by_channel[ch].by_month).forEach(ym=>allMonths.add(ym)); });
-  Array.from(allMonths).sort().forEach(ym=>{
-    const opt = document.createElement('option'); opt.value=ym; opt.textContent = `2026년 ${fmtMonth(ym)}`;
-    sel.appendChild(opt);
-  });
-
   const segWrap = document.getElementById('winnerChannelSeg');
-  let activeChannel = 'ALL';
   cw.channels.forEach((ch,i)=>{
     const btn = document.createElement('button');
     btn.textContent = WINNER_CH_LABEL[ch]||ch;
@@ -1931,34 +1922,48 @@ renderAdEfficiencyTable();
     btn.addEventListener('click', ()=>{
       segWrap.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
-      activeChannel = ch;
-      update();
+      winnerActiveChannel = ch;
+      renderWinnerTable();
     });
     segWrap.appendChild(btn);
   });
-
-  function update(){
-    const scope = sel.value;
-    const bucket = cw.by_channel[activeChannel];
-    const rows = scope==='all' ? bucket.all : (bucket.by_month[scope]||[]);
-    const scopeLabel = scope==='all' ? '전체 기간' : `2026년 ${fmtMonth(scope)}`;
-    document.getElementById('winnerDesc').textContent =
-      `${scopeLabel} · ${WINNER_CH_LABEL[activeChannel]} 기준, 광고비 ${fmtWon(cw.min_spend)} 이상 소재 중 전환값 상위 ${cw.top_n}개. (자사몰(CAFE24)에 매핑된 소재만 집계)`;
-    const table = document.getElementById('winnerTable');
-    const thead = '<thead><tr><th>순위</th><th>매체</th><th>광고 소재명</th><th>광고비</th><th>전환값</th><th>ROAS</th><th>CTR</th><th>전환수</th></tr></thead>';
-    let tbody = '<tbody>' + rows.map((r,i)=>{
-      const title = escapeHtml(r.campaign+' › '+r.adset);
-      const name = escapeHtml(r.ad && r.ad.trim() ? r.ad : (r.adset || r.campaign));
-      return `<tr title="${title}"><td>${i+1}</td><td>${AD_CH_LABEL[r.channel]||r.channel}</td><td style="text-align:left; white-space:normal; max-width:320px;">${name}</td><td>${fmtWon(r.spend)}</td><td>${fmtWon(r.value)}</td><td>${r.roas.toLocaleString('ko-KR',{maximumFractionDigits:1})}%</td><td>${r.ctr.toLocaleString('ko-KR',{maximumFractionDigits:1})}%</td><td>${r.conversions.toLocaleString('ko-KR')}건</td></tr>`;
-    }).join('') + '</tbody>';
-    if(rows.length===0){
-      tbody = '<tbody><tr><td colspan="8" style="text-align:center; color:var(--text-muted);">이 기간에는 조건을 만족하는 소재가 없습니다</td></tr></tbody>';
-    }
-    table.innerHTML = thead + tbody;
-  }
-  sel.addEventListener('change', update);
-  update();
 })();
+
+function renderWinnerTable(){
+  const cw = DATA.cafe24.creative_winners;
+  const { start, end } = filterState;
+  const totals = new Map(); // id -> totals
+  FULL.creativeDaily.forEach(r=>{
+    if(!inRange(r.date, start, end)) return;
+    if(!totals.has(r.id)) totals.set(r.id, {spend:0, impr:0, clicks:0, conv:0, value:0});
+    const t = totals.get(r.id);
+    t.spend += r.spend; t.impr += r.impr; t.clicks += r.clicks; t.conv += r.conv; t.value += r.value;
+  });
+
+  const rows = Array.from(totals.entries())
+    .filter(([,t])=>t.spend > 0)
+    .map(([id,t])=>({ ...cw.creatives[id], ...t }))
+    .filter(r => winnerActiveChannel==='ALL' || r.channel===winnerActiveChannel)
+    .sort((a,b)=>b.value-a.value)
+    .slice(0, cw.top_n);
+
+  document.getElementById('winnerDesc').textContent =
+    `${start} ~ ${end} · ${WINNER_CH_LABEL[winnerActiveChannel]} 기준, 전체 기간 광고비 ${fmtWon(cw.min_spend)} 이상인 소재 중 전환값 상위 ${cw.top_n}개. (자사몰(CAFE24)에 매핑된 소재만 집계)`;
+  const table = document.getElementById('winnerTable');
+  const thead = '<thead><tr><th>순위</th><th>매체</th><th>광고 소재명</th><th>광고비</th><th>전환값</th><th>ROAS</th><th>CTR</th><th>전환수</th></tr></thead>';
+  let tbody = '<tbody>' + rows.map((r,i)=>{
+    const roas = r.spend ? (r.value/r.spend*100).toLocaleString('ko-KR',{maximumFractionDigits:1}) : '0';
+    const ctr = r.impr ? (r.clicks/r.impr*100).toLocaleString('ko-KR',{maximumFractionDigits:1}) : '0';
+    const title = escapeHtml(r.campaign+' › '+r.adset);
+    const name = escapeHtml(r.ad && r.ad.trim() ? r.ad : (r.adset || r.campaign));
+    return `<tr title="${title}"><td>${i+1}</td><td>${AD_CH_LABEL[r.channel]||r.channel}</td><td style="text-align:left; white-space:normal; max-width:320px;">${name}</td><td>${fmtWon(r.spend)}</td><td>${fmtWon(r.value)}</td><td>${roas}%</td><td>${ctr}%</td><td>${Math.round(r.conv).toLocaleString('ko-KR')}건</td></tr>`;
+  }).join('') + '</tbody>';
+  if(rows.length===0){
+    tbody = '<tbody><tr><td colspan="8" style="text-align:center; color:var(--text-muted);">이 기간에는 조건을 만족하는 소재가 없습니다</td></tr></tbody>';
+  }
+  table.innerHTML = thead + tbody;
+}
+renderWinnerTable();
 
 /* ============================================================
    자사몰(CAFE24) 탭 — 제품별 광고비·매출·ROAS·CPM·CTR·CVR
@@ -2140,8 +2145,8 @@ function renderCafe24Tab(){
     revRows = revRows.filter(r=>r.product === c24SelectedProduct);
   }
   document.getElementById('c24TrendDesc').textContent = scopedToProduct
-    ? `"${c24SelectedProduct}" 제품에 매핑된 광고 소재 기준 일별 광고비와 매출(결제금액(+vat) 기준).`
-    : '자사몰(CAFE24)에 매핑된 광고 소재 기준 일별 광고비와 매출(결제금액(+vat) 기준).';
+    ? `"${c24SelectedProduct}" 제품에 매핑된 광고 소재 기준 일별 광고비와 매출(결제금액(-vat) 기준).`
+    : '자사몰(CAFE24)에 매핑된 광고 소재 기준 일별 광고비와 매출(결제금액(-vat) 기준).';
 
   const daily = cafe24DailySeries(adRows, revRows);
   drawMiniLineChart({

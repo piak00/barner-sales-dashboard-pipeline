@@ -203,7 +203,7 @@ def build_revenue(rows: list[list[str]]):
         "monthly_product_revenue": monthly_product_revenue,
         "meta": {
             "revenue_date_range": [dates[0], dates[-1]],
-            "source": "매출_RAW_CLEAN (거래건별 원본), 결제금액(+vat, 부가세 제외 공급가) 기준 집계",
+            "source": "매출_RAW_CLEAN (거래건별 원본), 결제금액(-vat, 부가세 제외 공급가) 기준 집계",
         },
     }
 
@@ -419,75 +419,57 @@ WINNER_CHANNELS = ('FACEBOOK', 'GOOGLE_ADS', 'TIKTOK')
 
 
 def build_creative_winners(ad_rows: list[list[str]]):
-    """자사몰(CAFE24) 탭: 기간별/월별 위너 소재.
+    """자사몰(CAFE24) 탭: 위너 소재 — 대시보드 상단의 기간 필터를 그대로 따라가도록,
+    서버에서 월별로 미리 순위를 매기지 않고 일자·소재 단위 원본을 그대로 내려보낸다
+    (클라이언트가 현재 선택된 기간에 맞춰 그때그때 합산·정렬한다).
 
-    FACEBOOK/GOOGLE_ADS/TIKTOK 중 자사몰(CAFE24)로 매핑되는 소재만 대상으로,
-    캠페인/광고세트/광고 단위로 집계해 ROAS 상위 N개를 뽑는다.
+    FACEBOOK/GOOGLE_ADS/TIKTOK 중 자사몰(CAFE24)로 매핑되는 소재만 대상으로 하고,
+    전체 기간 광고비 합계가 WINNER_MIN_SPEND 미만인 소재는 애초에 위너가 될 수 없으므로
+    제외해 용량을 줄인다(짧은 기간에 몰아써서 반짝 상위에 오르는 극단적 케이스는 배제됨).
     """
     header, *data = ad_rows
     data = [r for r in data if len(r) > 10 and r[0].strip()]
     data = [r for r in data if r[1] in WINNER_CHANNELS and map_ad_to_sales_channel(r[1], r[2]) == 'CAFE24']
 
-    # (채널,캠페인,광고세트,광고) -> {'all': totals, 'by_month': {ym: totals}}
-    creatives: dict[tuple, dict] = {}
+    lifetime_spend: dict[tuple, float] = {}
+    for row in data:
+        key = (row[1], row[2], row[3], row[4])
+        lifetime_spend[key] = lifetime_spend.get(key, 0.0) + parse_pct_or_num(row[6])
+    relevant_keys = {k for k, v in lifetime_spend.items() if v >= WINNER_MIN_SPEND}
 
-    def blank_totals():
-        return {"spend": 0.0, "impr": 0.0, "clicks": 0.0, "conv": 0.0, "value": 0.0}
-
+    # 같은 소재의 캠페인/광고세트/광고명이 일자마다 반복돼 용량을 크게 잡아먹으므로,
+    # 소재 메타데이터는 creatives 배열에 한 번만 두고 daily 행은 짧은 정수 id로만 참조한다.
+    creative_id: dict[tuple, int] = {}
+    creatives_list = []
+    daily_rows = []
     for row in data:
         date, ch, campaign, adset, ad = row[0], row[1], row[2], row[3], row[4]
         key = (ch, campaign, adset, ad)
-        if key not in creatives:
-            creatives[key] = {"all": blank_totals(), "by_month": {}}
-        entry = creatives[key]
-        ym = date[:7]
-        if ym not in entry["by_month"]:
-            entry["by_month"][ym] = blank_totals()
-        for scope in (entry["all"], entry["by_month"][ym]):
-            scope["spend"] += parse_pct_or_num(row[6])
-            scope["impr"] += parse_pct_or_num(row[7])
-            scope["clicks"] += parse_pct_or_num(row[8])
-            scope["conv"] += parse_pct_or_num(row[9])
-            scope["value"] += parse_pct_or_num(row[10])
-
-    def rank(rows_for_scope, channel_filter=None):
-        candidates = []
-        for (ch, campaign, adset, ad), totals in rows_for_scope:
-            if channel_filter and ch != channel_filter:
-                continue
-            if totals["spend"] < WINNER_MIN_SPEND:
-                continue
-            roas = round(totals["value"] / totals["spend"] * 100, 1) if totals["spend"] else 0
-            candidates.append({
-                "channel": ch, "campaign": campaign, "adset": adset, "ad": ad,
-                "spend": round(totals["spend"]), "value": round(totals["value"]),
-                "roas": roas,
-                "cpm": round(totals["spend"] / totals["impr"] * 1000) if totals["impr"] else 0,
-                "ctr": round(totals["clicks"] / totals["impr"] * 100, 2) if totals["impr"] else 0,
-                "conversions": round(totals["conv"]),
-            })
-        candidates.sort(key=lambda c: -c["value"])
-        return candidates[:WINNER_TOP_N]
-
-    all_scope = [(key, entry["all"]) for key, entry in creatives.items()]
-    months = sorted({ym for entry in creatives.values() for ym in entry["by_month"]})
-
-    channel_keys = ("ALL",) + WINNER_CHANNELS
-    by_channel = {}
-    for ch_key in channel_keys:
-        cf = None if ch_key == "ALL" else ch_key
-        month_ranked = {}
-        for ym in months:
-            month_scope = [(key, entry["by_month"][ym]) for key, entry in creatives.items() if ym in entry["by_month"]]
-            month_ranked[ym] = rank(month_scope, cf)
-        by_channel[ch_key] = {"all": rank(all_scope, cf), "by_month": month_ranked}
+        if key not in relevant_keys:
+            continue
+        spend = parse_pct_or_num(row[6])
+        impr = parse_pct_or_num(row[7])
+        clicks = parse_pct_or_num(row[8])
+        conv = parse_pct_or_num(row[9])
+        value = parse_pct_or_num(row[10])
+        if spend == 0 and impr == 0 and clicks == 0 and conv == 0 and value == 0:
+            continue
+        if key not in creative_id:
+            creative_id[key] = len(creatives_list)
+            creatives_list.append({"channel": ch, "campaign": campaign, "adset": adset, "ad": ad})
+        daily_rows.append({
+            "date": date, "id": creative_id[key],
+            "spend": round(spend), "impr": round(impr), "clicks": round(clicks),
+            "conv": round(conv), "value": round(value),
+        })
 
     return {
         "creative_winners": {
             "min_spend": WINNER_MIN_SPEND,
             "top_n": WINNER_TOP_N,
-            "channels": list(channel_keys),
-            "by_channel": by_channel,
+            "channels": ["ALL"] + list(WINNER_CHANNELS),
+            "creatives": creatives_list,
+            "daily": daily_rows,
         }
     }
 

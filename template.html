@@ -584,17 +584,6 @@
       <div class="tbl-scroll"><table id="adEfficiencyTable"></table></div>
     </section>
   </div>
-
-  <section class="card">
-    <div class="card-head">
-      <div>
-        <h2 class="card-title">기간별 위너 소재</h2>
-        <p class="card-desc" id="winnerDesc">광고비 상위 소재 중 ROAS 순위.</p>
-      </div>
-      <select class="month-select" id="winnerMonthSel"></select>
-    </div>
-    <div class="tbl-scroll"><table id="winnerTable"></table></div>
-  </section>
   </div><!-- /mainDashboardPanel -->
 
   <div id="cafe24Panel" hidden>
@@ -616,11 +605,18 @@
       </div>
     </div>
 
+    <div class="filterbar" style="margin-bottom:20px;">
+      <div class="filter-group">
+        <span class="filter-label">제품</span>
+        <select id="c24ProductSel"></select>
+      </div>
+    </div>
+
     <section class="card">
       <div class="card-head">
         <div>
           <h2 class="card-title">매출 · 광고비 추이</h2>
-          <p class="card-desc">자사몰(CAFE24)에 매핑된 광고 소재 기준 일별 광고비와 매출(결제금액(+vat) 기준).</p>
+          <p class="card-desc" id="c24TrendDesc">자사몰(CAFE24)에 매핑된 광고 소재 기준 일별 광고비와 매출(결제금액(+vat) 기준).</p>
         </div>
       </div>
       <div class="chart-shell" id="c24TrendShell">
@@ -672,6 +668,18 @@
         </div>
       </div>
       <div class="tbl-scroll"><table id="c24ProductTable"></table></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title">기간별 위너 소재</h2>
+          <p class="card-desc" id="winnerDesc">광고비 상위 소재 중 ROAS 순위.</p>
+        </div>
+        <select class="month-select" id="winnerMonthSel"></select>
+      </div>
+      <div class="seg" id="winnerChannelSeg" style="margin-bottom:12px;"></div>
+      <div class="tbl-scroll"><table id="winnerTable"></table></div>
     </section>
   </div>
 
@@ -1901,25 +1909,46 @@ renderAdEfficiencyTable();
 
 /* ---------------- 기간별/월별 위너 소재 ---------------- */
 (function initWinnerTable(){
-  const cw = DATA.creative_winners;
+  const cw = DATA.cafe24.creative_winners;
+  const WINNER_CH_LABEL = { ALL:'전체', FACEBOOK:'Meta(Facebook)', GOOGLE_ADS:'Google Ads', TIKTOK:'틱톡' };
   const sel = document.getElementById('winnerMonthSel');
   const optAll = document.createElement('option'); optAll.value='all'; optAll.textContent='전체 기간';
   sel.appendChild(optAll);
-  Object.keys(cw.by_month).sort().forEach(ym=>{
+  const allMonths = new Set();
+  cw.channels.forEach(ch=>{ Object.keys(cw.by_channel[ch].by_month).forEach(ym=>allMonths.add(ym)); });
+  Array.from(allMonths).sort().forEach(ym=>{
     const opt = document.createElement('option'); opt.value=ym; opt.textContent = `2026년 ${fmtMonth(ym)}`;
     sel.appendChild(opt);
   });
+
+  const segWrap = document.getElementById('winnerChannelSeg');
+  let activeChannel = 'ALL';
+  cw.channels.forEach((ch,i)=>{
+    const btn = document.createElement('button');
+    btn.textContent = WINNER_CH_LABEL[ch]||ch;
+    btn.dataset.ch = ch;
+    if(i===0) btn.classList.add('active');
+    btn.addEventListener('click', ()=>{
+      segWrap.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      activeChannel = ch;
+      update();
+    });
+    segWrap.appendChild(btn);
+  });
+
   function update(){
     const scope = sel.value;
-    const rows = scope==='all' ? cw.all : (cw.by_month[scope]||[]);
+    const bucket = cw.by_channel[activeChannel];
+    const rows = scope==='all' ? bucket.all : (bucket.by_month[scope]||[]);
     const scopeLabel = scope==='all' ? '전체 기간' : `2026년 ${fmtMonth(scope)}`;
     document.getElementById('winnerDesc').textContent =
-      `${scopeLabel} 기준, 광고비 ${fmtWon(cw.min_spend)} 이상 소재 중 ROAS 상위 ${cw.top_n}개.`;
+      `${scopeLabel} · ${WINNER_CH_LABEL[activeChannel]} 기준, 광고비 ${fmtWon(cw.min_spend)} 이상 소재 중 ROAS 상위 ${cw.top_n}개. (자사몰(CAFE24)에 매핑된 소재만 집계)`;
     const table = document.getElementById('winnerTable');
     const thead = '<thead><tr><th>순위</th><th>매체</th><th>광고 소재명</th><th>광고비</th><th>전환값</th><th>ROAS</th><th>CTR</th><th>전환수</th></tr></thead>';
     let tbody = '<tbody>' + rows.map((r,i)=>{
       const title = escapeHtml(r.campaign+' › '+r.adset);
-      const name = escapeHtml(r.ad);
+      const name = escapeHtml(r.ad && r.ad.trim() ? r.ad : (r.adset || r.campaign));
       return `<tr title="${title}"><td>${i+1}</td><td>${AD_CH_LABEL[r.channel]||r.channel}</td><td style="text-align:left; white-space:normal; max-width:320px;">${name}</td><td>${fmtWon(r.spend)}</td><td>${fmtWon(r.value)}</td><td>${r.roas.toLocaleString('ko-KR',{maximumFractionDigits:1})}%</td><td>${r.ctr.toLocaleString('ko-KR',{maximumFractionDigits:1})}%</td><td>${r.conversions.toLocaleString('ko-KR')}건</td></tr>`;
     }).join('') + '</tbody>';
     if(rows.length===0){
@@ -2075,10 +2104,44 @@ function cafe24DailySeries(adRows, revRows){
   return days;
 }
 
+let c24SelectedProduct = 'all';
+(function initC24ProductSelector(){
+  const unclassified = DATA.cafe24.ad_unclassified_label;
+  const unmapped = '미매핑 (분류 안 됨)';
+  const revByProduct = new Map();
+  FULL.cafe24Rev.forEach(r=>{ revByProduct.set(r.product, (revByProduct.get(r.product)||0) + r.revenue); });
+  FULL.cafe24Ad.forEach(r=>{ if(!revByProduct.has(r.product)) revByProduct.set(r.product, 0); });
+
+  const names = Array.from(revByProduct.keys())
+    .filter(n=> n!==unclassified && n!==unmapped)
+    .sort((a,b)=> (revByProduct.get(b)||0) - (revByProduct.get(a)||0));
+  const trailing = [unclassified, unmapped].filter(n=>revByProduct.has(n));
+
+  const sel = document.getElementById('c24ProductSel');
+  const optAll = document.createElement('option'); optAll.value='all'; optAll.textContent='전체 제품 합산';
+  sel.appendChild(optAll);
+  [...names, ...trailing].forEach(name=>{
+    const opt = document.createElement('option'); opt.value=name; opt.textContent=name;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener('change', ()=>{
+    c24SelectedProduct = sel.value;
+    renderCafe24Tab();
+  });
+})();
+
 function renderCafe24Tab(){
   const { start, end } = filterState;
-  const adRows = FULL.cafe24Ad.filter(r=>inRange(r.date, start, end));
-  const revRows = FULL.cafe24Rev.filter(r=>inRange(r.date, start, end));
+  let adRows = FULL.cafe24Ad.filter(r=>inRange(r.date, start, end));
+  let revRows = FULL.cafe24Rev.filter(r=>inRange(r.date, start, end));
+  const scopedToProduct = c24SelectedProduct !== 'all';
+  if(scopedToProduct){
+    adRows = adRows.filter(r=>r.product === c24SelectedProduct);
+    revRows = revRows.filter(r=>r.product === c24SelectedProduct);
+  }
+  document.getElementById('c24TrendDesc').textContent = scopedToProduct
+    ? `"${c24SelectedProduct}" 제품에 매핑된 광고 소재 기준 일별 광고비와 매출(결제금액(+vat) 기준).`
+    : '자사몰(CAFE24)에 매핑된 광고 소재 기준 일별 광고비와 매출(결제금액(+vat) 기준).';
 
   const daily = cafe24DailySeries(adRows, revRows);
   drawMiniLineChart({

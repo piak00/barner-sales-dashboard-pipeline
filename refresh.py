@@ -414,12 +414,19 @@ def build_cafe24_products(ad_rows: list[list[str]], revenue_rows: list[list[str]
 
 WINNER_MIN_SPEND = 300000  # 이 금액(원) 미만 광고비를 쓴 소재는 위너 후보에서 제외 (노이즈 방지)
 WINNER_TOP_N = 10
+# 자사몰(CAFE24) 위너 소재는 이 3개 매체만 본다 (사용자 확정 범위)
+WINNER_CHANNELS = ('FACEBOOK', 'GOOGLE_ADS', 'TIKTOK')
 
 
 def build_creative_winners(ad_rows: list[list[str]]):
-    """기간별/월별 위너 소재 — 캠페인/광고세트/광고 단위로 집계해 ROAS 상위 N개를 뽑는다."""
+    """자사몰(CAFE24) 탭: 기간별/월별 위너 소재.
+
+    FACEBOOK/GOOGLE_ADS/TIKTOK 중 자사몰(CAFE24)로 매핑되는 소재만 대상으로,
+    캠페인/광고세트/광고 단위로 집계해 ROAS 상위 N개를 뽑는다.
+    """
     header, *data = ad_rows
     data = [r for r in data if len(r) > 10 and r[0].strip()]
+    data = [r for r in data if r[1] in WINNER_CHANNELS and map_ad_to_sales_channel(r[1], r[2]) == 'CAFE24']
 
     # (채널,캠페인,광고세트,광고) -> {'all': totals, 'by_month': {ym: totals}}
     creatives: dict[tuple, dict] = {}
@@ -443,9 +450,11 @@ def build_creative_winners(ad_rows: list[list[str]]):
             scope["conv"] += parse_pct_or_num(row[9])
             scope["value"] += parse_pct_or_num(row[10])
 
-    def rank(rows_for_scope):
+    def rank(rows_for_scope, channel_filter=None):
         candidates = []
         for (ch, campaign, adset, ad), totals in rows_for_scope:
+            if channel_filter and ch != channel_filter:
+                continue
             if totals["spend"] < WINNER_MIN_SPEND:
                 continue
             roas = round(totals["value"] / totals["spend"] * 100, 1) if totals["spend"] else 0
@@ -461,18 +470,24 @@ def build_creative_winners(ad_rows: list[list[str]]):
         return candidates[:WINNER_TOP_N]
 
     all_scope = [(key, entry["all"]) for key, entry in creatives.items()]
-    by_month: dict[str, list] = {}
     months = sorted({ym for entry in creatives.values() for ym in entry["by_month"]})
-    for ym in months:
-        month_scope = [(key, entry["by_month"][ym]) for key, entry in creatives.items() if ym in entry["by_month"]]
-        by_month[ym] = rank(month_scope)
+
+    channel_keys = ("ALL",) + WINNER_CHANNELS
+    by_channel = {}
+    for ch_key in channel_keys:
+        cf = None if ch_key == "ALL" else ch_key
+        month_ranked = {}
+        for ym in months:
+            month_scope = [(key, entry["by_month"][ym]) for key, entry in creatives.items() if ym in entry["by_month"]]
+            month_ranked[ym] = rank(month_scope, cf)
+        by_channel[ch_key] = {"all": rank(all_scope, cf), "by_month": month_ranked}
 
     return {
         "creative_winners": {
             "min_spend": WINNER_MIN_SPEND,
             "top_n": WINNER_TOP_N,
-            "all": rank(all_scope),
-            "by_month": by_month,
+            "channels": list(channel_keys),
+            "by_channel": by_channel,
         }
     }
 
@@ -493,7 +508,7 @@ def main():
     agg.update(build_product_master(master_rows))
     agg.update(build_ads(ads_rows))
     agg.update(build_cafe24_products(ads_rows, revenue_rows))
-    agg.update(build_creative_winners(ads_rows))
+    agg["cafe24"]["creative_winners"] = build_creative_winners(ads_rows)["creative_winners"]
 
     # 광고비(판매채널 매핑) vs 실제 매출 비교 — CAFE24/스마트스토어/올리브영만 판매채널로 확정 매핑됨
     ad_spend_by_ch = agg["ads_by_channel"]["channel_totals"]

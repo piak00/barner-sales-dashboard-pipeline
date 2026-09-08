@@ -608,6 +608,54 @@
     <section class="card">
       <div class="card-head">
         <div>
+          <h2 class="card-title">매출 · 광고비 추이</h2>
+          <p class="card-desc">자사몰(CAFE24)에 매핑된 광고 소재 기준 일별 광고비와 매출(결제금액(+vat) 기준).</p>
+        </div>
+      </div>
+      <div class="chart-shell" id="c24TrendShell">
+        <svg class="chart" id="c24TrendChart" viewBox="0 0 980 260"></svg>
+        <div class="tooltip" id="c24TrendTooltip"></div>
+      </div>
+      <div class="legend" id="c24TrendLegend"></div>
+    </section>
+
+    <div class="row-2">
+      <section class="card">
+        <div class="card-head"><div><h2 class="card-title">ROAS 추이</h2><p class="card-desc">일별 매출 ÷ 광고비.</p></div></div>
+        <div class="chart-shell" id="c24RoasShell">
+          <svg class="chart" id="c24RoasChart" viewBox="0 0 470 200"></svg>
+          <div class="tooltip" id="c24RoasTooltip"></div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-head"><div><h2 class="card-title">CPM 추이</h2><p class="card-desc">노출 1,000회당 광고비.</p></div></div>
+        <div class="chart-shell" id="c24CpmShell">
+          <svg class="chart" id="c24CpmChart" viewBox="0 0 470 200"></svg>
+          <div class="tooltip" id="c24CpmTooltip"></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="row-2">
+      <section class="card">
+        <div class="card-head"><div><h2 class="card-title">CTR 추이</h2><p class="card-desc">노출 대비 클릭률.</p></div></div>
+        <div class="chart-shell" id="c24CtrShell">
+          <svg class="chart" id="c24CtrChart" viewBox="0 0 470 200"></svg>
+          <div class="tooltip" id="c24CtrTooltip"></div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-head"><div><h2 class="card-title">CPC 추이</h2><p class="card-desc">클릭 1회당 광고비.</p></div></div>
+        <div class="chart-shell" id="c24CpcShell">
+          <svg class="chart" id="c24CpcChart" viewBox="0 0 470 200"></svg>
+          <div class="tooltip" id="c24CpcTooltip"></div>
+        </div>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
           <h2 class="card-title">제품별 광고비 · 매출 · ROAS</h2>
           <p class="card-desc" id="c24TableDesc">자사몰(CAFE24)에 매핑된 광고 소재만 집계 — 캠페인/광고세트/광고명에서 제품을 키워드로 추정합니다. 매출은 결제금액(+vat) 기준.</p>
         </div>
@@ -1837,10 +1885,188 @@ renderAdEfficiencyTable();
 /* ============================================================
    자사몰(CAFE24) 탭 — 제품별 광고비·매출·ROAS·CPM·CTR·CVR
    ============================================================ */
+/* 범용 미니 라인차트 — 단일/복수 시리즈, 크로스헤어 툴팁 포함 */
+function drawMiniLineChart(cfg){
+  const svg = document.getElementById(cfg.svgId);
+  const vb = svg.getAttribute('viewBox').split(' ').map(Number);
+  const W = vb[2], H = vb[3];
+  const M = {t:14, r:14, b:24, l:cfg.leftMargin || 54};
+  const plotW = W-M.l-M.r, plotH = H-M.t-M.b;
+  svg.innerHTML = '';
+  const ns = 'http://www.w3.org/2000/svg';
+  const g = document.createElementNS(ns,'g');
+  const points = cfg.points;
+  if(points.length === 0){ svg.appendChild(g); return; }
+
+  const allVals = points.flatMap(p=>cfg.series.map(s=>p[s.key]||0));
+  const maxVal = niceNumber(Math.max(...allVals, 0.0001) * 1.15);
+  const x = i => M.l + (points.length===1?0:(i/(points.length-1))*plotW);
+  const y = v => M.t + plotH - (v/maxVal)*plotH;
+
+  const steps=4;
+  for(let s=0;s<=steps;s++){
+    const val = maxVal/steps*s;
+    const yy=y(val);
+    const line=document.createElementNS(ns,'line');
+    line.setAttribute('x1',M.l); line.setAttribute('x2',W-M.r);
+    line.setAttribute('y1',yy); line.setAttribute('y2',yy);
+    line.setAttribute('class','gridline');
+    g.appendChild(line);
+    const label=document.createElementNS(ns,'text');
+    label.setAttribute('x',M.l-8); label.setAttribute('y',yy+3);
+    label.setAttribute('text-anchor','end'); label.setAttribute('class','axis-text');
+    label.textContent = cfg.yFmt(val);
+    g.appendChild(label);
+  }
+  const tickCount = Math.min(points.length, 7);
+  for(let t=0;t<tickCount;t++){
+    const idx = Math.round(t*(points.length-1)/(tickCount-1||1));
+    const xx=x(idx);
+    const label=document.createElementNS(ns,'text');
+    label.setAttribute('x',xx); label.setAttribute('y',H-6);
+    label.setAttribute('text-anchor','middle'); label.setAttribute('class','axis-text');
+    label.textContent = fmtDate(points[idx].date);
+    g.appendChild(label);
+  }
+
+  const hoverDots = {};
+  cfg.series.forEach(s=>{
+    let d = '';
+    points.forEach((p,i)=>{ d += (i===0?'M ':'L ') + x(i) + ' ' + y(p[s.key]||0) + ' '; });
+    if(cfg.series.length===1){
+      let area = `M ${x(0)} ${y(0)} `;
+      points.forEach((p,i)=>{ area += `L ${x(i)} ${y(p[s.key]||0)} `; });
+      area += `L ${x(points.length-1)} ${y(0)} Z`;
+      const areaEl = document.createElementNS(ns,'path');
+      areaEl.setAttribute('d',area); areaEl.setAttribute('fill',`var(${s.colorVar})`); areaEl.setAttribute('opacity','0.10');
+      g.appendChild(areaEl);
+    }
+    const path = document.createElementNS(ns,'path');
+    path.setAttribute('d',d); path.setAttribute('fill','none');
+    path.setAttribute('stroke', `var(${s.colorVar})`); path.setAttribute('stroke-width','2');
+    path.setAttribute('stroke-linejoin','round'); path.setAttribute('stroke-linecap','round');
+    g.appendChild(path);
+
+    const last = points[points.length-1];
+    const dot = document.createElementNS(ns,'circle');
+    dot.setAttribute('cx',x(points.length-1)); dot.setAttribute('cy',y(last[s.key]||0));
+    dot.setAttribute('r','5'); dot.setAttribute('fill',`var(${s.colorVar})`);
+    dot.setAttribute('stroke','var(--surface-raised)'); dot.setAttribute('stroke-width','2');
+    g.appendChild(dot);
+
+    const hd = document.createElementNS(ns,'circle');
+    hd.setAttribute('r','5'); hd.setAttribute('fill',`var(${s.colorVar})`);
+    hd.setAttribute('stroke','var(--surface-raised)'); hd.setAttribute('stroke-width','2'); hd.setAttribute('opacity','0');
+    g.appendChild(hd);
+    hoverDots[s.key] = hd;
+  });
+
+  const chLine = document.createElementNS(ns,'line');
+  chLine.setAttribute('y1',M.t); chLine.setAttribute('y2',H-M.b); chLine.setAttribute('class','crosshair');
+  g.appendChild(chLine);
+
+  const hit = document.createElementNS(ns,'rect');
+  hit.setAttribute('x',M.l); hit.setAttribute('y',M.t); hit.setAttribute('width',plotW); hit.setAttribute('height',plotH);
+  hit.setAttribute('fill','transparent'); hit.style.cursor='crosshair';
+  g.appendChild(hit);
+  svg.appendChild(g);
+
+  if(cfg.shellId && cfg.tooltipId){
+    const shell = document.getElementById(cfg.shellId);
+    const tooltip = document.getElementById(cfg.tooltipId);
+    function showAt(clientX, clientY){
+      const rect = svg.getBoundingClientRect();
+      const svgX = (clientX-rect.left)/rect.width*W;
+      let idx = Math.round((svgX-M.l)/plotW*(points.length-1));
+      idx = Math.max(0, Math.min(points.length-1, idx));
+      const p = points[idx];
+      chLine.setAttribute('x1', x(idx)); chLine.setAttribute('x2', x(idx)); chLine.style.opacity=1;
+      tooltip.innerHTML='';
+      const d1=document.createElement('div'); d1.className='t-date'; d1.textContent=p.date;
+      tooltip.appendChild(d1);
+      cfg.series.forEach(s=>{
+        hoverDots[s.key].setAttribute('cx',x(idx)); hoverDots[s.key].setAttribute('cy',y(p[s.key]||0)); hoverDots[s.key].style.opacity=1;
+        const row=document.createElement('div'); row.className='t-row';
+        const k=document.createElement('span'); k.className='t-key';
+        const lk=document.createElement('span'); lk.className='t-line'; lk.style.background=`var(${s.colorVar})`;
+        const t=document.createElement('span'); t.textContent=s.label;
+        k.append(lk,t);
+        const v=document.createElement('span'); v.className='t-val'; v.textContent=cfg.tooltipFmt(p[s.key]||0);
+        row.append(k,v);
+        tooltip.appendChild(row);
+      });
+      tooltip.classList.add('show');
+      const shellRect = shell.getBoundingClientRect();
+      positionTooltip(tooltip, shellRect, clientX-shellRect.left, clientY-shellRect.top);
+    }
+    function hide(){ chLine.style.opacity=0; cfg.series.forEach(s=>hoverDots[s.key].style.opacity=0); tooltip.classList.remove('show'); }
+    hit.addEventListener('pointermove',(e)=>showAt(e.clientX,e.clientY));
+    hit.addEventListener('pointerleave',hide);
+  }
+}
+
+function cafe24DailySeries(adRows, revRows){
+  const byDate = new Map();
+  function ensure(date){
+    if(!byDate.has(date)) byDate.set(date, {date, spend:0, impr:0, clicks:0, conv:0, value:0, revenue:0});
+    return byDate.get(date);
+  }
+  adRows.forEach(r=>{
+    const d = ensure(r.date);
+    d.spend += r.spend; d.impr += r.impr; d.clicks += r.clicks; d.conv += r.conv; d.value += r.value;
+  });
+  revRows.forEach(r=>{ ensure(r.date).revenue += r.revenue; });
+  const days = Array.from(byDate.values()).sort((a,b)=>a.date.localeCompare(b.date));
+  days.forEach(d=>{
+    d.roas = d.spend ? d.revenue/d.spend*100 : 0;
+    d.cpm = d.impr ? d.spend/d.impr*1000 : 0;
+    d.cpc = d.clicks ? d.spend/d.clicks : 0;
+    d.ctr = d.impr ? d.clicks/d.impr*100 : 0;
+  });
+  return days;
+}
+
 function renderCafe24Tab(){
   const { start, end } = filterState;
   const adRows = FULL.cafe24Ad.filter(r=>inRange(r.date, start, end));
   const revRows = FULL.cafe24Rev.filter(r=>inRange(r.date, start, end));
+
+  const daily = cafe24DailySeries(adRows, revRows);
+  drawMiniLineChart({
+    svgId:'c24TrendChart', shellId:'c24TrendShell', tooltipId:'c24TrendTooltip', points: daily,
+    series:[{key:'spend', colorVar:'--axis', label:'광고비'}, {key:'revenue', colorVar:'--c-cafe24', label:'매출'}],
+    yFmt: v => v===0?'0':(v/1e8>=0.1 ? (v/1e8).toLocaleString('ko-KR',{maximumFractionDigits:1})+'억' : Math.round(v/1e4).toLocaleString('ko-KR')+'만'),
+    tooltipFmt: fmtWon,
+  });
+  (function renderC24TrendLegend(){
+    const wrap = document.getElementById('c24TrendLegend'); wrap.innerHTML='';
+    [['광고비','var(--axis)'],['매출','var(--c-cafe24)']].forEach(([label,color])=>{
+      const item=document.createElement('span'); item.className='item';
+      const sw=document.createElement('span'); sw.className='swatch-line'; sw.style.background=color;
+      const txt=document.createElement('span'); txt.textContent=label;
+      item.append(sw,txt); wrap.appendChild(item);
+    });
+  })();
+  drawMiniLineChart({
+    svgId:'c24RoasChart', shellId:'c24RoasShell', tooltipId:'c24RoasTooltip', points: daily, leftMargin:44,
+    series:[{key:'roas', colorVar:'--accent', label:'ROAS'}],
+    yFmt: v => Math.round(v)+'%', tooltipFmt: v => fmtPct(v),
+  });
+  drawMiniLineChart({
+    svgId:'c24CpmChart', shellId:'c24CpmShell', tooltipId:'c24CpmTooltip', points: daily,
+    series:[{key:'cpm', colorVar:'--pr-2', label:'CPM'}],
+    yFmt: v => Math.round(v).toLocaleString('ko-KR'), tooltipFmt: v => fmtWon(v),
+  });
+  drawMiniLineChart({
+    svgId:'c24CtrChart', shellId:'c24CtrShell', tooltipId:'c24CtrTooltip', points: daily, leftMargin:44,
+    series:[{key:'ctr', colorVar:'--pr-3', label:'CTR'}],
+    yFmt: v => v.toLocaleString('ko-KR',{maximumFractionDigits:1})+'%', tooltipFmt: v => fmtPct(v),
+  });
+  drawMiniLineChart({
+    svgId:'c24CpcChart', shellId:'c24CpcShell', tooltipId:'c24CpcTooltip', points: daily,
+    series:[{key:'cpc', colorVar:'--pr-4', label:'CPC'}],
+    yFmt: v => Math.round(v).toLocaleString('ko-KR'), tooltipFmt: v => fmtWon(v),
+  });
 
   const byProduct = new Map();
   function ensure(name){

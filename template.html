@@ -584,6 +584,17 @@
       <div class="tbl-scroll"><table id="adEfficiencyTable"></table></div>
     </section>
   </div>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">기간별 위너 소재</h2>
+        <p class="card-desc" id="winnerDesc">광고비 상위 소재 중 ROAS 순위.</p>
+      </div>
+      <select class="month-select" id="winnerMonthSel"></select>
+    </div>
+    <div class="tbl-scroll"><table id="winnerTable"></table></div>
+  </section>
   </div><!-- /mainDashboardPanel -->
 
   <div id="cafe24Panel" hidden>
@@ -931,6 +942,11 @@ const fmtPct = (v) => v.toLocaleString('ko-KR',{maximumFractionDigits:1,minimumF
 const fmtDate = (iso) => { const [y,m,d]=iso.split('-'); return `${parseInt(m)}/${parseInt(d)}`; };
 const fmtMonth = (ym) => { const [y,m]=ym.split('-'); return `${parseInt(m)}월`; };
 const fmtQty = (n) => Math.round(n).toLocaleString('ko-KR') + '개';
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s == null ? '' : String(s);
+  return div.innerHTML;
+}
 
 const CH_LABEL = {
   CAFE24:'자사몰(CAFE24)', SMART_STORE:'스마트스토어', COUPANG:'쿠팡', COUPANG_ZET:'쿠팡제트(로켓그로스)',
@@ -1381,6 +1397,7 @@ function productRevenueItems(month){
   update();
 })();
 
+/* ---------------- 기간별/월별 위너 소재 ---------------- */
 /* ============================================================
    CHART 3 — product quantity trend (3 lines)
    ============================================================ */
@@ -1881,6 +1898,38 @@ function renderAdEfficiencyTable(){
   table.innerHTML = thead + tbody;
 }
 renderAdEfficiencyTable();
+
+/* ---------------- 기간별/월별 위너 소재 ---------------- */
+(function initWinnerTable(){
+  const cw = DATA.creative_winners;
+  const sel = document.getElementById('winnerMonthSel');
+  const optAll = document.createElement('option'); optAll.value='all'; optAll.textContent='전체 기간';
+  sel.appendChild(optAll);
+  Object.keys(cw.by_month).sort().forEach(ym=>{
+    const opt = document.createElement('option'); opt.value=ym; opt.textContent = `2026년 ${fmtMonth(ym)}`;
+    sel.appendChild(opt);
+  });
+  function update(){
+    const scope = sel.value;
+    const rows = scope==='all' ? cw.all : (cw.by_month[scope]||[]);
+    const scopeLabel = scope==='all' ? '전체 기간' : `2026년 ${fmtMonth(scope)}`;
+    document.getElementById('winnerDesc').textContent =
+      `${scopeLabel} 기준, 광고비 ${fmtWon(cw.min_spend)} 이상 소재 중 ROAS 상위 ${cw.top_n}개.`;
+    const table = document.getElementById('winnerTable');
+    const thead = '<thead><tr><th>순위</th><th>매체</th><th>광고 소재명</th><th>광고비</th><th>전환값</th><th>ROAS</th><th>CTR</th><th>전환수</th></tr></thead>';
+    let tbody = '<tbody>' + rows.map((r,i)=>{
+      const title = escapeHtml(r.campaign+' › '+r.adset);
+      const name = escapeHtml(r.ad);
+      return `<tr title="${title}"><td>${i+1}</td><td>${AD_CH_LABEL[r.channel]||r.channel}</td><td style="text-align:left; white-space:normal; max-width:320px;">${name}</td><td>${fmtWon(r.spend)}</td><td>${fmtWon(r.value)}</td><td>${r.roas.toLocaleString('ko-KR',{maximumFractionDigits:1})}%</td><td>${r.ctr.toLocaleString('ko-KR',{maximumFractionDigits:1})}%</td><td>${r.conversions.toLocaleString('ko-KR')}건</td></tr>`;
+    }).join('') + '</tbody>';
+    if(rows.length===0){
+      tbody = '<tbody><tr><td colspan="8" style="text-align:center; color:var(--text-muted);">이 기간에는 조건을 만족하는 소재가 없습니다</td></tr></tbody>';
+    }
+    table.innerHTML = thead + tbody;
+  }
+  sel.addEventListener('change', update);
+  update();
+})();
 
 /* ============================================================
    자사몰(CAFE24) 탭 — 제품별 광고비·매출·ROAS·CPM·CTR·CVR

@@ -1,0 +1,1911 @@
+<title>바르너 매출 대시보드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@500;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    color-scheme: light;
+    --page:#f9f9f7;
+    --surface:#fcfcfb;
+    --surface-raised:#ffffff;
+    --text-primary:#0b0b0b;
+    --text-secondary:#52514e;
+    --text-muted:#898781;
+    --grid:#e1e0d9;
+    --axis:#c3c2b7;
+    --border:rgba(11,11,11,0.10);
+    --accent:#2a78d6;
+    --accent-soft:rgba(42,120,214,0.09);
+    --good:#006300;
+    --critical:#d03b3b;
+    --c-cafe24:#2a78d6;
+    --c-smart-store:#e87ba4;
+    --c-coupang:#eb6834;
+    --c-coupang-zet:#1baf7a;
+    --c-kakao-gift:#eda100;
+    --c-talkstore:#008300;
+    --c-olive-young:#4a3aa7;
+    --c-zigzag:#e34948;
+    --p-ems:#2a78d6;
+    --p-sport:#eb6834;
+    --p-slipper:#1baf7a;
+    --p-balance:#eda100;
+    --p-serum:#e87ba4;
+    --p-footcare:#008300;
+    --pr-1:#2a78d6; --pr-2:#eb6834; --pr-3:#1baf7a; --pr-4:#eda100;
+    --pr-5:#e87ba4; --pr-6:#008300; --pr-7:#4a3aa7; --pr-8:#e34948;
+    --font-display:'Gothic A1', system-ui, -apple-system, "Malgun Gothic", sans-serif;
+    --font-body:'IBM Plex Sans KR', system-ui, -apple-system, "Malgun Gothic", sans-serif;
+    --font-mono:'IBM Plex Mono', ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --page:#0d0d0d;
+      --surface:#1a1a19;
+      --surface-raised:#211f1e;
+      --text-primary:#ffffff;
+      --text-secondary:#c3c2b7;
+      --text-muted:#898781;
+      --grid:#2c2c2a;
+      --axis:#383835;
+      --border:rgba(255,255,255,0.10);
+      --accent:#3987e5;
+      --accent-soft:rgba(57,135,229,0.14);
+      --good:#0ca30c;
+      --critical:#e66767;
+      --c-cafe24:#3987e5;
+      --c-smart-store:#d55181;
+      --c-coupang:#d95926;
+      --c-coupang-zet:#199e70;
+      --c-kakao-gift:#c98500;
+      --c-talkstore:#008300;
+      --c-olive-young:#9085e9;
+      --c-zigzag:#e66767;
+      --p-ems:#3987e5;
+      --p-sport:#d95926;
+      --p-slipper:#199e70;
+      --p-balance:#c98500;
+      --p-serum:#d55181;
+      --p-footcare:#008300;
+      --pr-1:#3987e5; --pr-2:#d95926; --pr-3:#199e70; --pr-4:#c98500;
+      --pr-5:#d55181; --pr-6:#008300; --pr-7:#9085e9; --pr-8:#e66767;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page:#0d0d0d;
+    --surface:#1a1a19;
+    --surface-raised:#211f1e;
+    --text-primary:#ffffff;
+    --text-secondary:#c3c2b7;
+    --text-muted:#898781;
+    --grid:#2c2c2a;
+    --axis:#383835;
+    --border:rgba(255,255,255,0.10);
+    --accent:#3987e5;
+    --accent-soft:rgba(57,135,229,0.14);
+    --good:#0ca30c;
+    --critical:#e66767;
+    --c-cafe24:#3987e5;
+    --c-smart-store:#d55181;
+    --c-coupang:#d95926;
+    --c-coupang-zet:#199e70;
+    --c-kakao-gift:#c98500;
+    --c-talkstore:#008300;
+    --c-olive-young:#9085e9;
+    --c-zigzag:#e66767;
+    --p-ems:#3987e5;
+    --p-sport:#d95926;
+    --p-slipper:#199e70;
+    --p-balance:#c98500;
+    --p-serum:#d55181;
+    --p-footcare:#008300;
+    --pr-1:#3987e5; --pr-2:#d95926; --pr-3:#199e70; --pr-4:#c98500;
+    --pr-5:#d55181; --pr-6:#008300; --pr-7:#9085e9; --pr-8:#e66767;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--page);
+    color:var(--text-primary);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:40px 24px 64px;}
+
+  /* ---------- header ---------- */
+  header.top{
+    display:flex; flex-wrap:wrap; gap:20px 32px;
+    align-items:flex-end; justify-content:space-between;
+    padding-bottom:22px; margin-bottom:28px;
+    border-bottom:1px solid var(--border);
+  }
+  .eyebrow{
+    font-family:var(--font-mono); font-size:12px; letter-spacing:.08em;
+    color:var(--accent); text-transform:uppercase; margin:0 0 8px;
+    font-weight:600;
+  }
+  h1{
+    font-family:var(--font-display); font-weight:800;
+    font-size:clamp(26px,3.4vw,36px); line-height:1.15; margin:0;
+    text-wrap:balance;
+  }
+  .top-meta{
+    display:flex; flex-direction:column; gap:6px; align-items:flex-end;
+    font-size:13px; color:var(--text-secondary); text-align:right;
+  }
+  .top-meta .range{font-family:var(--font-mono); color:var(--text-primary); font-weight:600;}
+  .badge{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:11.5px; color:var(--text-secondary);
+    background:var(--surface-raised); border:1px solid var(--border);
+    padding:4px 10px; border-radius:100px;
+  }
+  .badge .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
+
+  /* ---------- KPI tiles ---------- */
+  .kpis{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:14px;
+    margin-bottom:32px;
+  }
+  @media (max-width:860px){ .kpis{grid-template-columns:repeat(2,1fr);} }
+  .kpi{
+    background:var(--surface-raised); border:1px solid var(--border);
+    border-radius:14px; padding:18px 18px 16px;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .kpi .label{font-size:12.5px; color:var(--text-secondary);}
+  .kpi .value{
+    font-family:var(--font-display); font-weight:800;
+    font-size:26px; letter-spacing:-.01em;
+  }
+  .kpi .sub{font-size:12px; color:var(--text-muted); font-family:var(--font-mono);}
+  .kpi .delta{font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:4px;}
+  .kpi .delta.up{color:var(--good);}
+  .kpi .delta.down{color:var(--critical);}
+
+  /* ---------- section / card ---------- */
+  section.card{
+    background:var(--surface-raised); border:1px solid var(--border);
+    border-radius:16px; padding:22px 24px 20px; margin-bottom:20px;
+  }
+  .card-head{
+    display:flex; flex-wrap:wrap; gap:10px 20px; align-items:flex-start;
+    justify-content:space-between; margin-bottom:6px;
+  }
+  .card-title{font-family:var(--font-display); font-weight:700; font-size:16.5px; margin:0;}
+  .card-desc{font-size:12.5px; color:var(--text-secondary); margin:4px 0 0; max-width:60ch;}
+  .row-2{display:grid; grid-template-columns:1.3fr 1fr; gap:20px;}
+  @media (max-width:900px){ .row-2{grid-template-columns:1fr;} }
+
+  /* granularity / toggle controls */
+  .seg{
+    display:inline-flex; background:var(--page); border:1px solid var(--border);
+    border-radius:9px; padding:3px; gap:2px;
+  }
+  .seg button{
+    border:0; background:transparent; font-family:var(--font-body);
+    font-size:12.5px; font-weight:600; color:var(--text-secondary);
+    padding:6px 12px; border-radius:6px; cursor:pointer;
+  }
+  .seg button.active{background:var(--surface-raised); color:var(--accent); box-shadow:0 1px 2px var(--border);}
+  .seg button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
+
+  .month-select{
+    font-family:var(--font-mono); font-size:12.5px; font-weight:600; color:var(--text-secondary);
+    background:var(--page); border:1px solid var(--border); border-radius:8px;
+    padding:6px 10px; cursor:pointer;
+  }
+  .month-select:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
+
+  .section-divider{
+    display:flex; align-items:center; gap:14px;
+    margin:36px 0 20px; color:var(--text-muted);
+    font-family:var(--font-mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase;
+  }
+  .section-divider::before, .section-divider::after{content:''; flex:1; height:1px; background:var(--border);}
+
+  /* legend */
+  .legend{display:flex; flex-wrap:wrap; gap:12px 18px; margin:10px 2px 2px;}
+  .legend .item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-secondary);}
+  .legend .swatch-line{width:14px; height:2px; border-radius:2px;}
+  .legend .swatch-rect{width:10px; height:10px; border-radius:2px;}
+
+  /* charts */
+  .chart-shell{position:relative;}
+  svg.chart{width:100%; height:auto; display:block; overflow:visible;}
+  .gridline{stroke:var(--grid); stroke-width:1;}
+  .axis-text{fill:var(--text-muted); font-size:11px; font-family:var(--font-mono);}
+  .axis-line{stroke:var(--axis); stroke-width:1;}
+  .crosshair{stroke:var(--axis); stroke-width:1; stroke-dasharray:3 3; opacity:0;}
+  .end-label{fill:var(--text-secondary); font-size:11.5px; font-family:var(--font-body); font-weight:600;}
+
+  .tooltip{
+    position:absolute; pointer-events:none; z-index:5;
+    background:var(--surface-raised); border:1px solid var(--border);
+    border-radius:10px; padding:9px 12px; font-size:12px;
+    box-shadow:0 6px 20px rgba(0,0,0,.14);
+    opacity:0; transform:translate(-50%,-8px); transition:opacity .08s;
+    min-width:150px;
+  }
+  .tooltip.show{opacity:1;}
+  .tooltip .t-date{font-family:var(--font-mono); color:var(--text-muted); font-size:11px; margin-bottom:5px;}
+  .tooltip .t-row{display:flex; align-items:center; gap:6px; justify-content:space-between; margin:2px 0;}
+  .tooltip .t-key{display:flex; align-items:center; gap:6px; color:var(--text-secondary);}
+  .tooltip .t-line{width:10px; height:2px; border-radius:2px; flex:none;}
+  .tooltip .t-val{font-family:var(--font-mono); font-weight:600; color:var(--text-primary);}
+  .tooltip .t-total{border-top:1px solid var(--border); margin-top:6px; padding-top:6px; font-weight:700; display:flex; justify-content:space-between;}
+
+  /* ranked bar list (channel share) */
+  .rank-list{display:flex; flex-direction:column; gap:11px; margin-top:8px;}
+  .rank-row{display:grid; grid-template-columns:minmax(84px,144px) 1fr auto; align-items:center; gap:10px;}
+  .rank-row .rname{font-size:12.5px; color:var(--text-secondary); font-weight:600;}
+  .rank-track{position:relative; height:14px; background:var(--grid); border-radius:5px; overflow:hidden;}
+  .rank-fill{position:absolute; inset:0; width:0; border-radius:5px; transition:width .5s ease;}
+  .rank-vals{display:flex; justify-content:flex-end; align-items:baseline; gap:6px; font-family:var(--font-mono); white-space:nowrap;}
+  .rank-vals .amt{font-size:12.5px; font-weight:600; white-space:nowrap;}
+  .rank-vals .pct{font-size:11px; color:var(--text-muted); white-space:nowrap;}
+
+  /* portfolio groups */
+  .portfolio-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-top:10px;}
+  .pgroup{
+    border:1px solid var(--border); border-radius:11px; padding:11px 13px;
+    background:var(--page); cursor:default;
+  }
+  .pgroup .pname{font-size:12.5px; font-weight:700; margin-bottom:6px;}
+  .pgroup .pbar{height:6px; border-radius:3px; background:var(--accent); margin-bottom:6px;}
+  .pgroup .pcount{font-family:var(--font-mono); font-size:11px; color:var(--text-muted);}
+  .kpi-badges{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px;}
+  .kbadge{
+    display:flex; align-items:center; gap:7px; font-size:12px;
+    background:var(--page); border:1px solid var(--border); border-radius:100px;
+    padding:6px 12px 6px 8px; color:var(--text-secondary);
+  }
+  .kbadge b{font-family:var(--font-mono); color:var(--text-primary); font-size:12.5px;}
+  .kbadge .kdot{width:8px;height:8px;border-radius:50%;}
+
+  details.tbl{margin-top:12px;}
+  details.tbl>summary{
+    cursor:pointer; font-size:12px; color:var(--accent); font-weight:600;
+    list-style:none; display:inline-flex; align-items:center; gap:5px;
+  }
+  details.tbl>summary::-webkit-details-marker{display:none;}
+  details.tbl>summary:before{content:"▸"; font-size:10px;}
+  details.tbl[open]>summary:before{content:"▾";}
+  .tbl-scroll{overflow-x:auto; margin-top:10px; border:1px solid var(--border); border-radius:10px;}
+  table{border-collapse:collapse; width:100%; font-size:12px; font-family:var(--font-mono);}
+  th,td{padding:8px 12px; text-align:right; white-space:nowrap; border-bottom:1px solid var(--border);}
+  th:first-child,td:first-child{text-align:left; font-family:var(--font-body);}
+  thead th{color:var(--text-muted); font-weight:600; font-size:11px; background:var(--page);}
+  tbody tr:last-child td{border-bottom:0;}
+
+  footer.notes{
+    margin-top:8px; padding-top:18px; border-top:1px solid var(--border);
+    font-size:12px; color:var(--text-muted); line-height:1.7;
+  }
+  footer.notes b{color:var(--text-secondary);}
+  footer.notes ul{margin:6px 0 0; padding-left:18px;}
+
+  @media (prefers-reduced-motion: reduce){
+    .rank-fill{transition:none;}
+  }
+
+  .filterbar{
+    display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px;
+    background:var(--surface-raised); border:1px solid var(--border); border-radius:12px;
+    padding:12px 16px; margin-bottom:20px;
+  }
+  .filter-group{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .filter-label{font-size:12px; color:var(--text-muted); font-weight:600;}
+  .filter-sep{color:var(--text-muted); font-size:12px;}
+  .date-input, .filterbar select{
+    font-family:var(--font-mono); font-size:12.5px; color:var(--text-primary);
+    background:var(--page); border:1px solid var(--border); border-radius:8px;
+    padding:5px 8px; cursor:pointer;
+  }
+  .date-input:focus-visible, .filterbar select:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+  .filter-compare{
+    display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--text-secondary);
+    cursor:pointer; user-select:none;
+  }
+  .filter-compare input{ accent-color:var(--accent); width:15px; height:15px; cursor:pointer; }
+  .filter-divider{ width:1px; align-self:stretch; background:var(--border); }
+
+  .tabswitch{ display:flex; gap:6px; margin-bottom:20px; border-bottom:1px solid var(--border); }
+  .tabswitch-btn{
+    font-family:var(--font-display); font-weight:700; font-size:13.5px;
+    color:var(--text-muted); background:transparent; border:0;
+    padding:10px 4px 12px; margin-right:18px; cursor:pointer;
+    border-bottom:2px solid transparent; margin-bottom:-1px;
+  }
+  .tabswitch-btn.active{ color:var(--accent); border-bottom-color:var(--accent); }
+  .tabswitch-btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .compare-group{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .compare-group .filter-label{ color:var(--accent); }
+  .delta-badge{
+    display:inline-flex; align-items:center; gap:4px; font-size:11.5px; font-weight:600;
+    padding:2px 8px; border-radius:100px; font-family:var(--font-mono);
+    background:color-mix(in srgb, var(--good) 12%, transparent); color:var(--good); margin-left:8px;
+  }
+  .delta-badge.down{ background:color-mix(in srgb, var(--critical) 12%, transparent); color:var(--critical); }
+</style>
+
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <p class="eyebrow">Barner · Sales ETL Dashboard</p>
+      <h1>바르너 매출 대시보드</h1>
+    </div>
+    <div class="top-meta">
+      <span class="range" id="metaRange">2026-01-01 → 2026-06-30</span>
+      <span class="badge"><span class="dot"></span>자사몰 + 7개 외부채널 통합 매출</span>
+    </div>
+  </header>
+
+  <div class="filterbar">
+    <div class="filter-group">
+      <span class="filter-label">기간</span>
+      <select id="rangePreset">
+        <option value="all">전체 기간</option>
+        <option value="7d">최근 7일</option>
+        <option value="30d">최근 30일</option>
+        <option value="90d">최근 90일</option>
+        <option value="thisMonth">이번 달</option>
+        <option value="lastMonth">지난 달</option>
+        <option value="custom">사용자 지정</option>
+      </select>
+      <input type="date" id="rangeStart" class="date-input">
+      <span class="filter-sep">~</span>
+      <input type="date" id="rangeEnd" class="date-input">
+    </div>
+    <div class="filter-divider"></div>
+    <label class="filter-compare">
+      <input type="checkbox" id="compareToggle"> 이전 기간과 비교
+    </label>
+    <div class="compare-group" id="compareGroup" hidden>
+      <span class="filter-label">비교 기간</span>
+      <input type="date" id="compareStart" class="date-input">
+      <span class="filter-sep">~</span>
+      <input type="date" id="compareEnd" class="date-input">
+    </div>
+  </div>
+
+  <div class="tabswitch" id="tabSwitch">
+    <button class="tabswitch-btn active" data-tab="main">전체 대시보드</button>
+    <button class="tabswitch-btn" data-tab="cafe24">자사몰(CAFE24)</button>
+  </div>
+
+  <div id="mainDashboardPanel">
+  <div class="kpis">
+    <div class="kpi">
+      <span class="label">기간 총 매출</span>
+      <span class="value" id="kpiTotal">-</span>
+      <span class="sub" id="kpiTotalSub">-</span>
+    </div>
+    <div class="kpi">
+      <span class="label">일 평균 매출</span>
+      <span class="value" id="kpiAvg">-</span>
+      <span class="sub">-</span>
+    </div>
+    <div class="kpi">
+      <span class="label">1위 채널 비중</span>
+      <span class="value" id="kpiTop">-</span>
+      <span class="sub" id="kpiTopSub">-</span>
+    </div>
+    <div class="kpi">
+      <span class="label" id="kpiGrowthLabel">매출 성장</span>
+      <span class="value delta up" id="kpiGrowth">-</span>
+      <span class="sub" id="kpiGrowthSub">-</span>
+      <span class="sub" id="kpiGrowthNote" style="font-size:11px;"></span>
+    </div>
+  </div>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">일별 매출 추이</h2>
+        <p class="card-desc">전체 채널 합산 매출(결제금액 부가세 제외 기준). 4월 카카오선물하기·톡스토어, 신규 채널 합류 시점이 추세에 반영됩니다.</p>
+      </div>
+      <div class="seg" id="granSeg">
+        <button data-gran="day" class="active">일별</button>
+        <button data-gran="week">주별</button>
+        <button data-gran="month">월별</button>
+      </div>
+    </div>
+    <div class="chart-shell" id="trendShell">
+      <svg class="chart" id="trendChart" viewBox="0 0 980 300"></svg>
+      <div class="tooltip" id="trendTooltip"></div>
+    </div>
+  </section>
+
+  <div class="row-2">
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title">월별 채널별 매출</h2>
+          <p class="card-desc">채널별 누적 막대. 카카오선물하기·톡스토어는 4월부터 매출 발생.</p>
+        </div>
+      </div>
+      <div class="chart-shell" id="stackShell">
+        <svg class="chart" id="stackChart" viewBox="0 0 560 300"></svg>
+        <div class="tooltip" id="stackTooltip"></div>
+      </div>
+      <div class="legend" id="stackLegend"></div>
+      <details class="tbl">
+        <summary>월별 · 채널별 매출 표 보기</summary>
+        <div class="tbl-scroll"><table id="stackTable"></table></div>
+      </details>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title">채널별 매출 비중</h2>
+          <p class="card-desc" id="rankDesc">누적 기준, 매출액 순위.</p>
+        </div>
+      </div>
+      <div class="rank-list" id="rankList"></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">핵심 제품 판매수량 추이</h2>
+        <p class="card-desc">일자별 표준제품명별 판매수량 로그 기준 — 22개 SKU 중 KPI구분 <b style="color:var(--text-secondary)">핵심제품 6종</b>만 표시합니다.</p>
+      </div>
+    </div>
+    <div class="chart-shell" id="qtyShell">
+      <svg class="chart" id="qtyChart" viewBox="0 0 980 260"></svg>
+      <div class="tooltip" id="qtyTooltip"></div>
+    </div>
+    <div class="legend" id="qtyLegend"></div>
+    <details class="tbl">
+      <summary>월별 판매수량 표 보기</summary>
+      <div class="tbl-scroll"><table id="qtyTable"></table></div>
+    </details>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">제품별 매출 비중</h2>
+        <p class="card-desc" id="prodRevDesc">매출 상위 제품 · 단일 제품코드 매핑 기준.</p>
+      </div>
+      <select class="month-select" id="prodRevMonthSel"></select>
+    </div>
+    <div class="rank-list" id="prodRevList"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">제품 포트폴리오 구성</h2>
+        <p class="card-desc">표준 제품코드 마스터 기준 22개 SKU를 제품군으로 분류. 막대 길이는 그룹 내 SKU 개수입니다.</p>
+      </div>
+    </div>
+    <div class="portfolio-grid" id="portfolioGrid"></div>
+    <div class="kpi-badges" id="kpiBadges"></div>
+  </section>
+
+  <div class="section-divider"><span>광고 성과</span></div>
+
+  <div class="kpis" id="adKpis">
+    <div class="kpi">
+      <span class="label">총 광고비</span>
+      <span class="value" id="adKpiSpend">-</span>
+      <span class="sub" id="adKpiSpendSub">-</span>
+    </div>
+    <div class="kpi">
+      <span class="label">전환값(추정 매출 기여)</span>
+      <span class="value" id="adKpiValue">-</span>
+      <span class="sub">노출→클릭→구매 전환값 합산</span>
+    </div>
+    <div class="kpi">
+      <span class="label">통합 ROAS</span>
+      <span class="value" id="adKpiRoas">-</span>
+      <span class="sub">전환값 ÷ 광고비</span>
+    </div>
+    <div class="kpi">
+      <span class="label">평균 CPA</span>
+      <span class="value" id="adKpiCpa">-</span>
+      <span class="sub" id="adKpiCpaSub">-</span>
+    </div>
+  </div>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">광고비 · 전환값 추이</h2>
+        <p class="card-desc">7개 매체(Meta·Google·네이버 GFA/SA·카카오모먼트·쿠팡·틱톡) 합산 일별 광고비와 전환값(픽셀 추적 구매가치).</p>
+      </div>
+      <div class="seg" id="adGranSeg">
+        <button data-gran="day" class="active">일별</button>
+        <button data-gran="month">월별</button>
+      </div>
+    </div>
+    <div class="chart-shell" id="adTrendShell">
+      <svg class="chart" id="adTrendChart" viewBox="0 0 980 300"></svg>
+      <div class="tooltip" id="adTrendTooltip"></div>
+    </div>
+    <div class="legend" id="adTrendLegend"></div>
+    <details class="tbl">
+      <summary>월별 광고 성과 표 보기</summary>
+      <div class="tbl-scroll"><table id="adTrendTable"></table></div>
+    </details>
+  </section>
+
+  <div class="row-2">
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title">월별 매체별 광고비</h2>
+          <p class="card-desc">매체별 누적 막대.</p>
+        </div>
+      </div>
+      <div class="chart-shell" id="adStackShell">
+        <svg class="chart" id="adStackChart" viewBox="0 0 560 300"></svg>
+        <div class="tooltip" id="adStackTooltip"></div>
+      </div>
+      <div class="legend" id="adStackLegend"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title">매체별 광고비 비중</h2>
+          <p class="card-desc" id="adRankDesc">누적 기준, 광고비 순위.</p>
+        </div>
+      </div>
+      <div class="rank-list" id="adRankList"></div>
+    </section>
+  </div>
+
+  <div class="row-2">
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title">판매채널 매핑 기준 광고비</h2>
+          <p class="card-desc">Meta: 캠페인명에 올영세일/올리브영 → 올리브영, 그 외 → 자사몰. 네이버 SA/GFA: '브스' → 스마트스토어, 그 외 → 자사몰. Google·틱톡 → 전량 자사몰. 쿠팡 광고 → 쿠팡. 카카오모먼트: '자사몰' → 자사몰, 그 외(톡딜·선물하기 등) → 카카오 외부몰.</p>
+        </div>
+      </div>
+      <div class="rank-list" id="adChannelRankList"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title">채널별 광고비 대비 매출</h2>
+          <p class="card-desc">판매채널로 매핑 가능한 4개 채널만 비교(자사몰·스마트스토어·올리브영·쿠팡). 카카오 외부몰은 대응되는 매출 채널이 불명확해 제외.</p>
+        </div>
+      </div>
+      <div class="tbl-scroll"><table id="adEfficiencyTable"></table></div>
+    </section>
+  </div>
+  </div><!-- /mainDashboardPanel -->
+
+  <div id="cafe24Panel" hidden>
+    <div class="kpis" style="grid-template-columns:repeat(3,1fr);">
+      <div class="kpi">
+        <span class="label">자사몰 매출</span>
+        <span class="value" id="c24KpiRevenue">-</span>
+        <span class="sub" id="c24KpiRevenueSub">-</span>
+      </div>
+      <div class="kpi">
+        <span class="label">자사몰 광고비</span>
+        <span class="value" id="c24KpiSpend">-</span>
+        <span class="sub" id="c24KpiSpendSub">-</span>
+      </div>
+      <div class="kpi">
+        <span class="label">ROAS (매출 ÷ 광고비)</span>
+        <span class="value" id="c24KpiRoas">-</span>
+        <span class="sub" id="c24KpiRoasSub">-</span>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title">제품별 광고비 · 매출 · ROAS</h2>
+          <p class="card-desc" id="c24TableDesc">자사몰(CAFE24)에 매핑된 광고 소재만 집계 — 캠페인/광고세트/광고명에서 제품을 키워드로 추정합니다. 매출은 결제금액(+vat) 기준.</p>
+        </div>
+      </div>
+      <div class="tbl-scroll"><table id="c24ProductTable"></table></div>
+    </section>
+  </div>
+
+  <footer class="notes">
+    <b>데이터 안내</b>
+    <ul>
+      <li>매출은 매출_RAW_CLEAN 탭의 거래건별 원본(44,400건)을 일자·채널별로 집계했으며, <b>결제금액(+vat)</b>(부가세를 제외한 공급가 기준) 컬럼을 사용합니다 — 고객이 실제 결제한 금액(결제금액)과는 다릅니다.</li>
+      <li>판매수량은 제품수량_RAW_CLEAN 탭 원본(53,586건)을 기준으로 하며, 22개 SKU 중 KPI구분이 핵심제품인 6종(EMS 미니스팟·아치스본 스포츠/슬리퍼/밸런스·바디괄사 세럼·클리어풋 제로 파우더)만 추이 차트에 표시합니다.</li>
+      <li>광고 성과는 바르너_광고소재 탭의 소재·일자별 원본(154,639건)을 매체·일자별로 집계했으며, 전환값은 각 매체 픽셀이 추적한 구매 전환 가치로 실제 매출과 100% 일치하지 않을 수 있습니다. 목표매출·예산 대비 집행률 등은 원본 시트에 없습니다.</li>
+      <li>매출·판매수량·광고 성과 모두 원본 시트가 매일 최신화되면 이 대시보드도 링크 공유(뷰어) 상태를 통해 자동으로 다시 집계할 수 있습니다.</li>
+    </ul>
+  </footer>
+
+</div>
+
+<script>
+const DATA = __SALES_DATA_JSON__;
+
+/* ============================================================
+   전체 기간 원본 스냅샷 — 필터를 아무리 바꿔도 이 배열들은 절대 덮어쓰지 않는다.
+   DATA.* 는 "현재 화면에 보이는 기간"의 값으로 매번 새로 계산해 덮어쓴다.
+   ============================================================ */
+const FULL = {
+  daily: DATA.daily_series,
+  qty: DATA.qty_series,
+  adsDaily: DATA.ads.daily_series,
+  abcDaily: DATA.ads_by_channel.daily_series,
+  cafe24Ad: DATA.cafe24.ad_daily,
+  cafe24Rev: DATA.cafe24.revenue_daily,
+};
+const FULL_START = FULL.daily[0].date;
+const FULL_END = FULL.daily[FULL.daily.length-1].date;
+
+function inRange(date, start, end){ return date>=start && date<=end; }
+function sumField(rows, key){ return rows.reduce((s,r)=>s+(r[key]||0), 0); }
+function sumChannelTotals(rows, channelKeys){
+  const totals = {}; channelKeys.forEach(c=>totals[c]=0);
+  rows.forEach(r=>{ channelKeys.forEach(c=>{ totals[c]+=(r[c]||0); }); });
+  return totals;
+}
+function groupByMonth(rows, channelKeys, extraKeys){
+  const monthly = new Map();
+  rows.forEach(r=>{
+    const ym = r.date.slice(0,7);
+    if(!monthly.has(ym)){
+      const base = {month: ym};
+      channelKeys.forEach(c=>base[c]=0);
+      extraKeys.forEach(k=>base[k]=0);
+      monthly.set(ym, base);
+    }
+    const m = monthly.get(ym);
+    channelKeys.forEach(c=>{ m[c]+=(r[c]||0); });
+    extraKeys.forEach(k=>{ m[k]+=(r[k]||0); });
+  });
+  return Array.from(monthly.values()).sort((a,b)=>a.month.localeCompare(b.month));
+}
+function computeAdsMonthly(dailyRows, channelKeys){
+  const grouped = groupByMonth(dailyRows, channelKeys, ['spend_total','value_total','conversions_total']);
+  grouped.forEach(m=>{
+    m.roas = m.spend_total ? Math.round(m.value_total/m.spend_total*1000)/10 : 0;
+    m.cpa = m.conversions_total ? Math.round(m.spend_total/m.conversions_total) : 0;
+    m.conversions = m.conversions_total;
+  });
+  return grouped;
+}
+function addDays(dateStr, n){
+  const d = new Date(dateStr+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n);
+  return d.toISOString().slice(0,10);
+}
+
+/* 선택된 기간 하나에 대한 전체 집계 스냅샷(매출/수량/광고/채널매핑광고) 계산 — DATA를 건드리지 않는 순수 함수 */
+function computeSnapshot(start, end){
+  const daily = FULL.daily.filter(r=>inRange(r.date, start, end));
+  const channel_totals = sumChannelTotals(daily, DATA.channels);
+  const grand_total = sumField(daily, 'total');
+
+  const qty = FULL.qty.filter(r=>inRange(r.date, start, end));
+
+  const adsDaily = FULL.adsDaily.filter(r=>inRange(r.date, start, end));
+  const ads_channel_totals = sumChannelTotals(adsDaily, DATA.ads.channels);
+  const grand_spend = sumField(adsDaily, 'spend_total');
+  const grand_value = sumField(adsDaily, 'value_total');
+  const grand_conversions = sumField(adsDaily, 'conversions_total');
+
+  const abcDaily = FULL.abcDaily.filter(r=>inRange(r.date, start, end));
+  const abc_channel_totals = sumChannelTotals(abcDaily, DATA.ads_by_channel.channels);
+
+  return {
+    start, end, daily, channel_totals, grand_total, qty,
+    adsDaily, ads_channel_totals, grand_spend, grand_value, grand_conversions,
+    abcDaily, abc_channel_totals,
+  };
+}
+
+/* ---------------- delta badge (KPI 비교 표시) ---------------- */
+function appendDeltaBadge(valueElId, current, compare, opts){
+  opts = opts || {};
+  const el = document.getElementById(valueElId);
+  const existing = el.parentElement.querySelector('.delta-badge');
+  if(existing) existing.remove();
+  if(compare == null) return;
+  const diff = opts.points ? (current-compare) : (compare ? (current-compare)/compare*100 : 0);
+  let isGood = diff >= 0;
+  if(opts.invert) isGood = !isGood;
+  const badge = document.createElement('span');
+  badge.className = 'delta-badge ' + (isGood ? '' : 'down');
+  const sign = diff >= 0 ? '+' : '';
+  badge.textContent = sign + diff.toLocaleString('ko-KR',{maximumFractionDigits:1}) + (opts.points ? '%p' : '%');
+  el.insertAdjacentElement('afterend', badge);
+}
+
+/* ---------------- 기간 필터 상태 + 적용 ---------------- */
+let filterState = { start: FULL_START, end: FULL_END, compare: false, cStart: null, cEnd: null };
+
+function applyFilters(){
+  const { start, end } = filterState;
+  const snap = computeSnapshot(start, end);
+
+  DATA.daily_series = snap.daily;
+  DATA.monthly_series = groupByMonth(snap.daily, DATA.channels, ['total']);
+  DATA.channel_totals = snap.channel_totals;
+  DATA.grand_total = snap.grand_total;
+
+  DATA.qty_series = snap.qty;
+
+  DATA.ads.daily_series = snap.adsDaily;
+  DATA.ads.monthly_series = computeAdsMonthly(snap.adsDaily, DATA.ads.channels);
+  DATA.ads.channel_totals = snap.ads_channel_totals;
+  DATA.ads.grand_spend = snap.grand_spend;
+  DATA.ads.grand_value = snap.grand_value;
+  DATA.ads.grand_roas = snap.grand_spend ? Math.round(snap.grand_value/snap.grand_spend*1000)/10 : 0;
+  DATA.ads.grand_conversions = snap.grand_conversions;
+  DATA.ads.grand_cpa = snap.grand_conversions ? Math.round(snap.grand_spend/snap.grand_conversions) : 0;
+  DATA.ads.date_range = [start, end];
+
+  DATA.ads_by_channel.daily_series = snap.abcDaily;
+  DATA.ads_by_channel.monthly_series = computeAdsMonthly(snap.abcDaily, DATA.ads_by_channel.channels);
+  DATA.ads_by_channel.channel_totals = snap.abc_channel_totals;
+
+  DATA.channel_ad_efficiency = ['CAFE24','SMART_STORE','OLIVE_YOUNG','COUPANG'].map(ch=>{
+    const spend = snap.abc_channel_totals[ch] || 0;
+    const revenue = snap.channel_totals[ch] || 0;
+    return { channel: ch, ad_spend: spend, revenue, spend_pct_of_revenue: revenue ? Math.round(spend/revenue*1000)/10 : 0 };
+  });
+
+  const compareSnap = (filterState.compare && filterState.cStart && filterState.cEnd)
+    ? computeSnapshot(filterState.cStart, filterState.cEnd) : null;
+
+  renderKpis(compareSnap);
+  drawTrendChart();
+  drawStackChart();
+  renderStackTable();
+  renderChannelRankList();
+  drawQtyChart();
+  renderQtyTable();
+  renderAdKpis(compareSnap);
+  drawAdTrendChart();
+  renderAdTrendTable();
+  drawAdStackChart();
+  renderAdRankList();
+  renderAdChannelRankList();
+  renderAdEfficiencyTable();
+  renderCafe24Tab();
+}
+
+/* ---------------- 필터바 UI 배선 ---------------- */
+function wireFilterBar(){
+  const rangePresetEl = document.getElementById('rangePreset');
+  const rangeStartEl = document.getElementById('rangeStart');
+  const rangeEndEl = document.getElementById('rangeEnd');
+  const compareToggleEl = document.getElementById('compareToggle');
+  const compareGroupEl = document.getElementById('compareGroup');
+  const compareStartEl = document.getElementById('compareStart');
+  const compareEndEl = document.getElementById('compareEnd');
+
+  [rangeStartEl, rangeEndEl, compareStartEl, compareEndEl].forEach(el=>{
+    el.min = FULL_START; el.max = FULL_END;
+  });
+
+  function setDateInputs(startEl, endEl, start, end){ startEl.value = start; endEl.value = end; }
+
+  function presetRange(preset){
+    let start = FULL_START, end = FULL_END;
+    const endDate = new Date(FULL_END+'T00:00:00Z');
+    if(preset==='7d'){ start = addDays(FULL_END, -6); }
+    else if(preset==='30d'){ start = addDays(FULL_END, -29); }
+    else if(preset==='90d'){ start = addDays(FULL_END, -89); }
+    else if(preset==='thisMonth'){ start = FULL_END.slice(0,7)+'-01'; }
+    else if(preset==='lastMonth'){
+      const y = endDate.getUTCFullYear(), m = endDate.getUTCMonth();
+      const ly = new Date(Date.UTC(y, m-1, 1)).getUTCFullYear();
+      const lm = new Date(Date.UTC(y, m-1, 1)).getUTCMonth();
+      start = `${ly}-${String(lm+1).padStart(2,'0')}-01`;
+      const lastDay = new Date(Date.UTC(ly, lm+1, 0)).getUTCDate();
+      end = `${ly}-${String(lm+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+    }
+    if(start < FULL_START) start = FULL_START;
+    if(end > FULL_END) end = FULL_END;
+    return {start, end};
+  }
+
+  function defaultComparePeriod(start, end){
+    const days = Math.round((new Date(end+'T00:00:00Z') - new Date(start+'T00:00:00Z'))/86400000) + 1;
+    const cEnd = addDays(start, -1);
+    let cStart = addDays(cEnd, -(days-1));
+    if(cStart < FULL_START) cStart = FULL_START;
+    if(cEnd < FULL_START) return null;
+    return {cStart, cEnd};
+  }
+
+  function onRangeChange(){
+    let start = rangeStartEl.value, end = rangeEndEl.value;
+    if(!start || !end || start > end) return;
+    filterState.start = start; filterState.end = end;
+    if(compareToggleEl.checked){
+      if(!compareStartEl.value || !compareEndEl.value){
+        const d = defaultComparePeriod(start, end);
+        if(d) setDateInputs(compareStartEl, compareEndEl, d.cStart, d.cEnd);
+      }
+      filterState.compare = true;
+      filterState.cStart = compareStartEl.value;
+      filterState.cEnd = compareEndEl.value;
+    } else {
+      filterState.compare = false;
+    }
+    applyFilters();
+  }
+
+  rangePresetEl.addEventListener('change', ()=>{
+    const preset = rangePresetEl.value;
+    if(preset==='custom') return;
+    const {start,end} = presetRange(preset);
+    setDateInputs(rangeStartEl, rangeEndEl, start, end);
+    onRangeChange();
+  });
+  rangeStartEl.addEventListener('change', ()=>{ rangePresetEl.value='custom'; onRangeChange(); });
+  rangeEndEl.addEventListener('change', ()=>{ rangePresetEl.value='custom'; onRangeChange(); });
+
+  compareToggleEl.addEventListener('change', ()=>{
+    compareGroupEl.hidden = !compareToggleEl.checked;
+    if(compareToggleEl.checked && (!compareStartEl.value || !compareEndEl.value)){
+      const d = defaultComparePeriod(filterState.start, filterState.end);
+      if(d) setDateInputs(compareStartEl, compareEndEl, d.cStart, d.cEnd);
+    }
+    onRangeChange();
+  });
+  compareStartEl.addEventListener('change', ()=>{
+    if(!compareStartEl.value || !compareEndEl.value || compareStartEl.value > compareEndEl.value) return;
+    filterState.compare = compareToggleEl.checked;
+    filterState.cStart = compareStartEl.value; filterState.cEnd = compareEndEl.value;
+    applyFilters();
+  });
+  compareEndEl.addEventListener('change', ()=>{
+    if(!compareStartEl.value || !compareEndEl.value || compareStartEl.value > compareEndEl.value) return;
+    filterState.compare = compareToggleEl.checked;
+    filterState.cStart = compareStartEl.value; filterState.cEnd = compareEndEl.value;
+    applyFilters();
+  });
+
+  setDateInputs(rangeStartEl, rangeEndEl, FULL_START, FULL_END);
+}
+
+/* ---------------- formatters ---------------- */
+const fmtEok = (krw) => (krw/1e8).toLocaleString('ko-KR',{maximumFractionDigits:1,minimumFractionDigits:1}) + '억원';
+const fmtManwon = (krw) => Math.round(krw/1e4).toLocaleString('ko-KR') + '만원';
+const fmtWon = (krw) => Math.round(krw).toLocaleString('ko-KR') + '원';
+const fmtPct = (v) => v.toLocaleString('ko-KR',{maximumFractionDigits:1,minimumFractionDigits:1}) + '%';
+const fmtDate = (iso) => { const [y,m,d]=iso.split('-'); return `${parseInt(m)}/${parseInt(d)}`; };
+const fmtMonth = (ym) => { const [y,m]=ym.split('-'); return `${parseInt(m)}월`; };
+const fmtQty = (n) => Math.round(n).toLocaleString('ko-KR') + '개';
+
+const CH_LABEL = {
+  CAFE24:'자사몰(CAFE24)', SMART_STORE:'스마트스토어', COUPANG:'쿠팡', COUPANG_ZET:'쿠팡제트(로켓그로스)',
+  KAKAO_GIFT:'카카오선물하기', TALKSTORE:'톡스토어', OLIVE_YOUNG:'올리브영', ZIGZAG:'지그재그'
+};
+const CH_VAR = {
+  CAFE24:'--c-cafe24', SMART_STORE:'--c-smart-store', COUPANG:'--c-coupang', COUPANG_ZET:'--c-coupang-zet',
+  KAKAO_GIFT:'--c-kakao-gift', TALKSTORE:'--c-talkstore', OLIVE_YOUNG:'--c-olive-young', ZIGZAG:'--c-zigzag'
+};
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function daysInMonth(ym){ const [y,m]=ym.split('-').map(Number); return new Date(y,m,0).getDate(); }
+
+/* ---------------- KPI header ---------------- */
+function renderKpis(compareSnap){
+  document.getElementById('metaRange').textContent = `${filterState.start} → ${filterState.end}`;
+
+  document.getElementById('kpiTotal').textContent = fmtEok(DATA.grand_total);
+  document.getElementById('kpiTotalSub').textContent = `${DATA.daily_series.length}일 · ${DATA.channels.length}개 채널 합산`;
+
+  document.getElementById('kpiAvg').textContent = fmtManwon(DATA.daily_series.length ? DATA.grand_total/DATA.daily_series.length : 0);
+  document.querySelector('#kpiAvg + .sub').textContent = `${DATA.daily_series.length}일 기준`;
+
+  const sorted = Object.entries(DATA.channel_totals).sort((a,b)=>b[1]-a[1]);
+  const [topCh, topVal] = sorted[0];
+  const topShare = DATA.grand_total ? topVal/DATA.grand_total*100 : 0;
+  document.getElementById('kpiTop').textContent = fmtPct(topShare);
+  document.getElementById('kpiTopSub').textContent = `${CH_LABEL[topCh]} · ${fmtEok(topVal)}`;
+
+  const growthLabelEl = document.getElementById('kpiGrowthLabel');
+  const growthEl = document.getElementById('kpiGrowth');
+  const growthSubEl = document.getElementById('kpiGrowthSub');
+  const growthNoteEl = document.getElementById('kpiGrowthNote');
+  growthNoteEl.textContent = '';
+
+  if(compareSnap){
+    growthLabelEl.textContent = '선택기간 vs 비교기간 매출';
+    const growth = compareSnap.grand_total ? (DATA.grand_total-compareSnap.grand_total)/compareSnap.grand_total*100 : 0;
+    growthEl.textContent = (growth>=0?'+':'') + fmtPct(growth);
+    growthEl.className = 'value delta ' + (growth>=0?'up':'down');
+    growthSubEl.textContent = `${fmtEok(compareSnap.grand_total)} → ${fmtEok(DATA.grand_total)}`;
+    growthNoteEl.textContent = `비교기간 ${compareSnap.start} ~ ${compareSnap.end}`;
+  } else {
+    const months = DATA.monthly_series;
+    const dateSet = new Set(DATA.daily_series.map(r=>r.date));
+    const fullMonths = months.filter(m=>{
+      const lastDay = daysInMonth(m.month);
+      return dateSet.has(m.month+'-01') && dateSet.has(m.month+'-'+String(lastDay).padStart(2,'0'));
+    });
+    if(fullMonths.length >= 2){
+      const jan = fullMonths[0], endM = fullMonths[fullMonths.length-1];
+      const growth = jan.total ? (endM.total - jan.total)/jan.total*100 : 0;
+      growthEl.textContent = (growth>=0?'+':'') + fmtPct(growth);
+      growthEl.className = 'value delta ' + (growth>=0?'up':'down');
+      growthSubEl.textContent = `${fmtEok(jan.total)} → ${fmtEok(endM.total)}`;
+      growthLabelEl.textContent = `${fmtMonth(jan.month)} → ${fmtMonth(endM.month)} 매출 성장`;
+      const excluded = months.length - fullMonths.length;
+      if(excluded > 0){
+        growthNoteEl.textContent = `선택 기간 내 미완결 월 ${excluded}개는 비교에서 제외`;
+      }
+    } else {
+      growthLabelEl.textContent = '매출 성장';
+      growthEl.textContent = '-'; growthEl.className='value delta';
+      growthSubEl.textContent = '이 기간에는 비교할 완결된 월이 2개월 미만입니다';
+    }
+  }
+}
+renderKpis(null);
+
+/* ---------------- shared tooltip positioning ---------------- */
+function positionTooltip(tip, shellRect, x, y){
+  let left = x, top = y - 14;
+  const tw = tip.offsetWidth || 160;
+  if(left - tw/2 < 4) left = tw/2 + 4;
+  if(left + tw/2 > shellRect.width - 4) left = shellRect.width - tw/2 - 4;
+  tip.style.left = left + 'px';
+  tip.style.top = Math.max(top, 60) + 'px';
+}
+
+/* ============================================================
+   CHART 1 — daily/weekly/monthly total revenue trend (line+area)
+   ============================================================ */
+const trendState = { gran: 'day' };
+
+function aggregateTrend(gran){
+  const daily = DATA.daily_series;
+  if(gran === 'day') return daily.map(r=>({label:r.date, total:r.total, byChannel:r}));
+  if(gran === 'month') return DATA.monthly_series.map(r=>({label:r.month, total:r.total, byChannel:r}));
+  // week: group by Monday-start ISO week
+  const buckets = new Map();
+  daily.forEach(r=>{
+    const d = new Date(r.date+'T00:00:00Z');
+    const day = (d.getUTCDay()+6)%7; // 0=Mon
+    const monday = new Date(d); monday.setUTCDate(d.getUTCDate()-day);
+    const key = monday.toISOString().slice(0,10);
+    if(!buckets.has(key)) buckets.set(key, {label:key, total:0, byChannel:{}});
+    const b = buckets.get(key);
+    b.total += r.total;
+    DATA.channels.forEach(c=>{ b.byChannel[c] = (b.byChannel[c]||0) + r[c]; });
+  });
+  return Array.from(buckets.values()).sort((a,b)=>a.label.localeCompare(b.label));
+}
+
+function drawTrendChart(){
+  const points = aggregateTrend(trendState.gran);
+  const svg = document.getElementById('trendChart');
+  const W = 980, H = 300, M = {t:16,r:16,b:28,l:56};
+  const plotW = W-M.l-M.r, plotH = H-M.t-M.b;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = '';
+
+  const maxVal = Math.max(...points.map(p=>p.total)) * 1.15;
+  const niceMax = niceNumber(maxVal);
+  const x = (i) => M.l + (points.length===1?0:(i/(points.length-1))*plotW);
+  const y = (v) => M.t + plotH - (v/niceMax)*plotH;
+
+  const ns = 'http://www.w3.org/2000/svg';
+  const g = document.createElementNS(ns,'g');
+
+  // gridlines + y labels
+  const steps = 4;
+  for(let s=0; s<=steps; s++){
+    const val = niceMax/steps*s;
+    const yy = y(val);
+    const line = document.createElementNS(ns,'line');
+    line.setAttribute('x1',M.l); line.setAttribute('x2',W-M.r);
+    line.setAttribute('y1',yy); line.setAttribute('y2',yy);
+    line.setAttribute('class','gridline');
+    g.appendChild(line);
+    const label = document.createElementNS(ns,'text');
+    label.setAttribute('x', M.l-8); label.setAttribute('y', yy+3);
+    label.setAttribute('text-anchor','end'); label.setAttribute('class','axis-text');
+    label.textContent = val===0 ? '0' : (val/1e8).toLocaleString('ko-KR',{maximumFractionDigits:1})+'억';
+    g.appendChild(label);
+  }
+
+  // x ticks — sample ~7
+  const tickCount = Math.min(points.length, gran_ticks(trendState.gran));
+  for(let t=0;t<tickCount;t++){
+    const idx = Math.round(t*(points.length-1)/(tickCount-1||1));
+    const xx = x(idx);
+    const label = document.createElementNS(ns,'text');
+    label.setAttribute('x', xx); label.setAttribute('y', H-8);
+    label.setAttribute('text-anchor','middle'); label.setAttribute('class','axis-text');
+    label.textContent = trendState.gran==='month' ? fmtMonth(points[idx].label) : fmtDate(points[idx].label);
+    g.appendChild(label);
+  }
+
+  // area
+  let areaPath = `M ${x(0)} ${y(0)} `;
+  points.forEach((p,i)=>{ areaPath += `L ${x(i)} ${y(p.total)} `; });
+  areaPath += `L ${x(points.length-1)} ${y(0)} Z`;
+  const area = document.createElementNS(ns,'path');
+  area.setAttribute('d', areaPath);
+  area.setAttribute('fill', 'var(--accent)');
+  area.setAttribute('opacity', '0.10');
+  g.appendChild(area);
+
+  // line
+  let linePath = '';
+  points.forEach((p,i)=>{ linePath += (i===0?'M ':'L ') + x(i) + ' ' + y(p.total) + ' '; });
+  const line = document.createElementNS(ns,'path');
+  line.setAttribute('d', linePath);
+  line.setAttribute('fill','none');
+  line.setAttribute('stroke','var(--accent)');
+  line.setAttribute('stroke-width','2');
+  line.setAttribute('stroke-linejoin','round');
+  line.setAttribute('stroke-linecap','round');
+  g.appendChild(line);
+
+  // end marker
+  const last = points[points.length-1];
+  const dot = document.createElementNS(ns,'circle');
+  dot.setAttribute('cx', x(points.length-1)); dot.setAttribute('cy', y(last.total));
+  dot.setAttribute('r','5'); dot.setAttribute('fill','var(--accent)');
+  dot.setAttribute('stroke','var(--surface-raised)'); dot.setAttribute('stroke-width','2');
+  g.appendChild(dot);
+
+  // crosshair + hover dot
+  const chLine = document.createElementNS(ns,'line');
+  chLine.setAttribute('y1', M.t); chLine.setAttribute('y2', H-M.b);
+  chLine.setAttribute('class','crosshair');
+  g.appendChild(chLine);
+  const hoverDot = document.createElementNS(ns,'circle');
+  hoverDot.setAttribute('r','5'); hoverDot.setAttribute('fill','var(--accent)');
+  hoverDot.setAttribute('stroke','var(--surface-raised)'); hoverDot.setAttribute('stroke-width','2');
+  hoverDot.setAttribute('opacity','0');
+  g.appendChild(hoverDot);
+
+  // hit rect
+  const hit = document.createElementNS(ns,'rect');
+  hit.setAttribute('x',M.l); hit.setAttribute('y',M.t);
+  hit.setAttribute('width',plotW); hit.setAttribute('height',plotH);
+  hit.setAttribute('fill','transparent');
+  hit.style.cursor = 'crosshair';
+  g.appendChild(hit);
+
+  svg.appendChild(g);
+
+  const shell = document.getElementById('trendShell');
+  const tooltip = document.getElementById('trendTooltip');
+
+  function showAt(clientX){
+    const rect = svg.getBoundingClientRect();
+    const svgX = (clientX - rect.left) / rect.width * W;
+    let idx = Math.round((svgX - M.l) / plotW * (points.length-1));
+    idx = Math.max(0, Math.min(points.length-1, idx));
+    const p = points[idx];
+    chLine.setAttribute('x1', x(idx)); chLine.setAttribute('x2', x(idx));
+    chLine.style.opacity = 1;
+    hoverDot.setAttribute('cx', x(idx)); hoverDot.setAttribute('cy', y(p.total));
+    hoverDot.style.opacity = 1;
+
+    const dateLabel = trendState.gran==='day' ? p.label
+      : trendState.gran==='week' ? `${p.label} 주`
+      : `2026년 ${fmtMonth(p.label)}`;
+    tooltip.innerHTML = '';
+    const d = document.createElement('div'); d.className='t-date'; d.textContent = dateLabel;
+    const row = document.createElement('div'); row.className='t-total';
+    const kEl = document.createElement('span'); kEl.textContent = '합산 매출';
+    const vEl = document.createElement('span'); vEl.textContent = fmtWon(p.total);
+    row.append(kEl, vEl);
+    tooltip.append(d, row);
+    tooltip.classList.add('show');
+
+    const shellRect = shell.getBoundingClientRect();
+    const relX = (clientX - shellRect.left);
+    positionTooltip(tooltip, shellRect, relX, rect.top - shellRect.top + (y(p.total)/H)*rect.height);
+  }
+  function hide(){ chLine.style.opacity = 0; hoverDot.style.opacity = 0; tooltip.classList.remove('show'); }
+
+  hit.addEventListener('pointermove', (e)=>showAt(e.clientX));
+  hit.addEventListener('pointerleave', hide);
+  hit.addEventListener('pointerdown', (e)=>showAt(e.clientX));
+}
+function gran_ticks(g){ return g==='day'?7:(g==='week'?8:6); }
+function niceNumber(v){
+  if(v<=0) return 1;
+  const exp = Math.floor(Math.log10(v));
+  const base = Math.pow(10,exp);
+  const f = v/base;
+  let nf;
+  if(f<=1) nf=1; else if(f<=2) nf=2; else if(f<=5) nf=5; else nf=10;
+  return nf*base;
+}
+
+document.getElementById('granSeg').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  document.querySelectorAll('#granSeg button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  trendState.gran = btn.dataset.gran;
+  drawTrendChart();
+});
+drawTrendChart();
+
+/* ============================================================
+   CHART 2 — monthly stacked bar by channel
+   ============================================================ */
+function drawStackChart(){
+  const svg = document.getElementById('stackChart');
+  const months = DATA.monthly_series;
+  const channels = DATA.channels;
+  const W=560, H=300, M={t:14,r:14,b:26,l:52};
+  const plotW=W-M.l-M.r, plotH=H-M.t-M.b;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML='';
+  const ns='http://www.w3.org/2000/svg';
+  const g = document.createElementNS(ns,'g');
+
+  const maxTotal = niceNumber(Math.max(...months.map(m=>m.total)) * 1.1);
+  const y = (v) => M.t + plotH - (v/maxTotal)*plotH;
+
+  const steps=4;
+  for(let s=0;s<=steps;s++){
+    const val = maxTotal/steps*s;
+    const yy = y(val);
+    const line = document.createElementNS(ns,'line');
+    line.setAttribute('x1',M.l); line.setAttribute('x2',W-M.r);
+    line.setAttribute('y1',yy); line.setAttribute('y2',yy);
+    line.setAttribute('class','gridline');
+    g.appendChild(line);
+    const label = document.createElementNS(ns,'text');
+    label.setAttribute('x',M.l-8); label.setAttribute('y',yy+3);
+    label.setAttribute('text-anchor','end'); label.setAttribute('class','axis-text');
+    label.textContent = val===0?'0':(val/1e8).toLocaleString('ko-KR',{maximumFractionDigits:1})+'억';
+    g.appendChild(label);
+  }
+
+  const bandW = plotW/months.length;
+  const barW = Math.min(40, bandW*0.55);
+  const gap = 2;
+
+  const shell = document.getElementById('stackShell');
+  const tooltip = document.getElementById('stackTooltip');
+
+  months.forEach((m,mi)=>{
+    const cx = M.l + bandW*mi + bandW/2;
+    let cursorY = M.t + plotH;
+    channels.forEach(ch=>{
+      const val = m[ch]||0;
+      if(val<=0) return;
+      const h = (val/maxTotal)*plotH;
+      const rectH = Math.max(0, h-gap);
+      const ry = cursorY - h;
+      const rect = document.createElementNS(ns,'rect');
+      rect.setAttribute('x', cx-barW/2);
+      rect.setAttribute('y', ry);
+      rect.setAttribute('width', barW);
+      rect.setAttribute('height', rectH);
+      rect.setAttribute('rx', 2);
+      rect.setAttribute('fill', `var(${CH_VAR[ch]})`);
+      rect.style.cursor='pointer';
+      rect.addEventListener('pointerenter', ()=>rect.setAttribute('opacity','0.82'));
+      rect.addEventListener('pointerleave', ()=>{rect.setAttribute('opacity','1'); tooltip.classList.remove('show');});
+      rect.addEventListener('pointermove', (e)=>{
+        rect.setAttribute('opacity','0.82');
+        tooltip.innerHTML='';
+        const d1=document.createElement('div'); d1.className='t-date';
+        d1.textContent = `2026년 ${fmtMonth(m.month)}`;
+        const row=document.createElement('div'); row.className='t-row';
+        const key=document.createElement('span'); key.className='t-key';
+        const lineKey=document.createElement('span'); lineKey.className='t-line';
+        lineKey.style.background = `var(${CH_VAR[ch]})`;
+        const lbl=document.createElement('span'); lbl.textContent = CH_LABEL[ch];
+        key.append(lineKey,lbl);
+        const val2=document.createElement('span'); val2.className='t-val';
+        val2.textContent = fmtWon(val) + ` (${fmtPct(val/m.total*100)})`;
+        row.append(key,val2);
+        tooltip.append(d1,row);
+        tooltip.classList.add('show');
+        const shellRect = shell.getBoundingClientRect();
+        positionTooltip(tooltip, shellRect, e.clientX-shellRect.left, e.clientY-shellRect.top);
+      });
+      g.appendChild(rect);
+      cursorY = ry;
+    });
+    const label = document.createElementNS(ns,'text');
+    label.setAttribute('x', cx); label.setAttribute('y', H-8);
+    label.setAttribute('text-anchor','middle'); label.setAttribute('class','axis-text');
+    label.textContent = fmtMonth(m.month);
+    g.appendChild(label);
+  });
+
+  svg.appendChild(g);
+}
+drawStackChart();
+
+(function renderStackLegend(){
+  const wrap = document.getElementById('stackLegend');
+  DATA.channels.forEach(ch=>{
+    const item = document.createElement('span'); item.className='item';
+    const sw = document.createElement('span'); sw.className='swatch-rect';
+    sw.style.background = `var(${CH_VAR[ch]})`;
+    const txt = document.createElement('span'); txt.textContent = CH_LABEL[ch];
+    item.append(sw,txt);
+    wrap.appendChild(item);
+  });
+})();
+
+function renderStackTable(){
+  const table = document.getElementById('stackTable');
+  const channels = DATA.channels;
+  const cell = (val, total) => `${fmtWon(val)}${total ? ` (${fmtPct(val/total*100)})` : ''}`;
+  let thead = '<thead><tr><th>월</th>' + channels.map(c=>`<th>${CH_LABEL[c]}</th>`).join('') + '<th>합계</th></tr></thead>';
+  let tbody = '<tbody>' + DATA.monthly_series.map(m=>{
+    return '<tr><td>'+m.month+'</td>' + channels.map(c=>`<td>${cell(m[c]||0, m.total)}</td>`).join('') + `<td>${fmtWon(m.total)}</td></tr>`;
+  }).join('') + '</tbody>';
+  table.innerHTML = thead+tbody;
+}
+renderStackTable();
+
+/* ============================================================
+   ranked bar list (shared by channel share / product revenue / ad channel)
+   ============================================================ */
+function renderRankList(containerId, items){
+  const wrap = document.getElementById(containerId);
+  wrap.innerHTML = '';
+  const total = items.reduce((s,r)=>s+r.amount, 0);
+  const max = Math.max(...items.map(r=>r.amount), 1);
+  items.forEach(item=>{
+    const row = document.createElement('div'); row.className='rank-row';
+    const name = document.createElement('span'); name.className='rname'; name.textContent = item.name;
+    const track = document.createElement('div'); track.className='rank-track';
+    const fill = document.createElement('div'); fill.className='rank-fill';
+    fill.style.background = `var(${item.colorVar})`;
+    track.appendChild(fill);
+    const vals = document.createElement('div'); vals.className='rank-vals';
+    const amt = document.createElement('span'); amt.className='amt'; amt.textContent = fmtEok(item.amount);
+    const pct = document.createElement('span'); pct.className='pct'; pct.textContent = '('+fmtPct(total? item.amount/total*100 : 0)+')';
+    vals.append(amt,pct);
+    row.append(name, track, vals);
+    wrap.appendChild(row);
+    requestAnimationFrame(()=>{ fill.style.width = (item.amount/max*100)+'%'; });
+  });
+}
+
+function renderChannelRankList(){
+  document.getElementById('rankDesc').textContent = `${filterState.start} ~ ${filterState.end} 누적 기준, 매출액 순위.`;
+  const items = Object.entries(DATA.channel_totals)
+    .sort((a,b)=>b[1]-a[1])
+    .map(([ch,val])=>({name: CH_LABEL[ch], amount: val, colorVar: CH_VAR[ch]}));
+  renderRankList('rankList', items);
+}
+renderChannelRankList();
+
+/* ---------------- product revenue ranked list (전체 / 월별 선택) ---------------- */
+const PR_COLORS = ['--pr-1','--pr-2','--pr-3','--pr-4','--pr-5','--pr-6','--pr-7','--pr-8'];
+function productRevenueItems(month){
+  let rows;
+  if(month === 'all'){
+    rows = DATA.product_revenue.map(r=>({name:r.name, amount:r.amount, kind:r.kind}));
+  } else {
+    const keys = DATA.product_revenue_keys;
+    const src = DATA.monthly_product_revenue.find(r=>r.month===month);
+    rows = keys.map(k=>({
+      name:k, amount: src[k]||0,
+      kind: k.startsWith('기타') ? 'other' : (k.startsWith('미매핑') ? 'unmapped' : 'product')
+    })).sort((a,b)=>{
+      if(a.kind!=='product' && b.kind==='product') return 1;
+      if(a.kind==='product' && b.kind!=='product') return -1;
+      return b.amount-a.amount;
+    });
+  }
+  let idx = 0;
+  return rows.map(r=>{
+    let colorVar;
+    if(r.kind==='product'){ colorVar = PR_COLORS[idx % PR_COLORS.length]; idx++; }
+    else if(r.kind==='unmapped'){ colorVar = '--critical'; }
+    else { colorVar = '--axis'; }
+    return {name:r.name, amount:r.amount, colorVar};
+  });
+}
+(function initProductRevenue(){
+  const sel = document.getElementById('prodRevMonthSel');
+  const optAll = document.createElement('option'); optAll.value='all'; optAll.textContent='전체 기간 누적';
+  sel.appendChild(optAll);
+  DATA.monthly_product_revenue.forEach(r=>{
+    const opt = document.createElement('option'); opt.value=r.month; opt.textContent = `2026년 ${fmtMonth(r.month)}`;
+    sel.appendChild(opt);
+  });
+  function update(){
+    const month = sel.value;
+    document.getElementById('prodRevDesc').textContent = month==='all'
+      ? `${FULL_START} ~ ${FULL_END} 누적, 결제금액(+vat) 기준 · 단일 제품코드로 매핑된 거래만 제품별로 집계되며 나머지는 미매핑으로 표시됩니다.`
+      : `2026년 ${fmtMonth(month)} 기준, 결제금액(+vat) 기준 · 단일 제품코드로 매핑된 거래만 제품별로 집계되며 나머지는 미매핑으로 표시됩니다.`;
+    renderRankList('prodRevList', productRevenueItems(month));
+  }
+  sel.addEventListener('change', update);
+  update();
+})();
+
+/* ============================================================
+   CHART 3 — product quantity trend (3 lines)
+   ============================================================ */
+const P_VAR = {
+  'EMS 미니스팟':'--p-ems','아치스본 스포츠':'--p-sport','아치스본 슬리퍼':'--p-slipper',
+  '아치스본 밸런스':'--p-balance','바디괄사 세럼':'--p-serum','클리어풋 제로 파우더':'--p-footcare'
+};
+function drawQtyChart(){
+  const svg = document.getElementById('qtyChart');
+  const series = DATA.qty_products;
+  const points = DATA.qty_series;
+  const W=980,H=260,M={t:16,r:16,b:26,l:52};
+  const plotW=W-M.l-M.r, plotH=H-M.t-M.b;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.innerHTML='';
+  const ns='http://www.w3.org/2000/svg';
+  const g=document.createElementNS(ns,'g');
+
+  const maxVal = niceNumber(Math.max(...points.flatMap(p=>series.map(s=>p[s]||0))) * 1.2);
+  const x = (i) => M.l + (points.length===1?0:(i/(points.length-1))*plotW);
+  const y = (v) => M.t + plotH - (v/maxVal)*plotH;
+
+  const steps=4;
+  for(let s=0;s<=steps;s++){
+    const val = maxVal/steps*s;
+    const yy=y(val);
+    const line=document.createElementNS(ns,'line');
+    line.setAttribute('x1',M.l); line.setAttribute('x2',W-M.r);
+    line.setAttribute('y1',yy); line.setAttribute('y2',yy);
+    line.setAttribute('class','gridline');
+    g.appendChild(line);
+    const label=document.createElementNS(ns,'text');
+    label.setAttribute('x',M.l-8); label.setAttribute('y',yy+3);
+    label.setAttribute('text-anchor','end'); label.setAttribute('class','axis-text');
+    label.textContent = Math.round(val).toLocaleString('ko-KR');
+    g.appendChild(label);
+  }
+  const tickCount = 7;
+  for(let t=0;t<tickCount;t++){
+    const idx = Math.round(t*(points.length-1)/(tickCount-1));
+    const xx=x(idx);
+    const label=document.createElementNS(ns,'text');
+    label.setAttribute('x',xx); label.setAttribute('y',H-8);
+    label.setAttribute('text-anchor','middle'); label.setAttribute('class','axis-text');
+    label.textContent = fmtDate(points[idx].date);
+    g.appendChild(label);
+  }
+
+  const hoverDots = {};
+  series.forEach(s=>{
+    let path='';
+    points.forEach((p,i)=>{ path += (i===0?'M ':'L ') + x(i) + ' ' + y(p[s]||0) + ' '; });
+    const line=document.createElementNS(ns,'path');
+    line.setAttribute('d',path); line.setAttribute('fill','none');
+    line.setAttribute('stroke',`var(${P_VAR[s]})`); line.setAttribute('stroke-width','2');
+    line.setAttribute('stroke-linejoin','round'); line.setAttribute('stroke-linecap','round');
+    g.appendChild(line);
+
+    const last = points[points.length-1];
+    const dot=document.createElementNS(ns,'circle');
+    dot.setAttribute('cx',x(points.length-1)); dot.setAttribute('cy',y(last[s]||0));
+    dot.setAttribute('r','5'); dot.setAttribute('fill',`var(${P_VAR[s]})`);
+    dot.setAttribute('stroke','var(--surface-raised)'); dot.setAttribute('stroke-width','2');
+    g.appendChild(dot);
+
+    const hd=document.createElementNS(ns,'circle');
+    hd.setAttribute('r','5'); hd.setAttribute('fill',`var(${P_VAR[s]})`);
+    hd.setAttribute('stroke','var(--surface-raised)'); hd.setAttribute('stroke-width','2');
+    hd.setAttribute('opacity','0');
+    g.appendChild(hd);
+    hoverDots[s]=hd;
+  });
+
+  const chLine=document.createElementNS(ns,'line');
+  chLine.setAttribute('y1',M.t); chLine.setAttribute('y2',H-M.b);
+  chLine.setAttribute('class','crosshair');
+  g.appendChild(chLine);
+
+  const hit=document.createElementNS(ns,'rect');
+  hit.setAttribute('x',M.l); hit.setAttribute('y',M.t);
+  hit.setAttribute('width',plotW); hit.setAttribute('height',plotH);
+  hit.setAttribute('fill','transparent'); hit.style.cursor='crosshair';
+  g.appendChild(hit);
+  svg.appendChild(g);
+
+  const shell = document.getElementById('qtyShell');
+  const tooltip = document.getElementById('qtyTooltip');
+  function showAt(clientX, clientY){
+    const rect = svg.getBoundingClientRect();
+    const svgX = (clientX-rect.left)/rect.width*W;
+    let idx = Math.round((svgX-M.l)/plotW*(points.length-1));
+    idx = Math.max(0, Math.min(points.length-1, idx));
+    const p = points[idx];
+    chLine.setAttribute('x1', x(idx)); chLine.setAttribute('x2', x(idx));
+    chLine.style.opacity = 1;
+    tooltip.innerHTML='';
+    const d1=document.createElement('div'); d1.className='t-date'; d1.textContent = p.date;
+    tooltip.appendChild(d1);
+    series.forEach(s=>{
+      hoverDots[s].setAttribute('cx', x(idx)); hoverDots[s].setAttribute('cy', y(p[s]||0));
+      hoverDots[s].style.opacity = 1;
+      const row=document.createElement('div'); row.className='t-row';
+      const key=document.createElement('span'); key.className='t-key';
+      const lk=document.createElement('span'); lk.className='t-line'; lk.style.background=`var(${P_VAR[s]})`;
+      const lbl=document.createElement('span'); lbl.textContent=s;
+      key.append(lk,lbl);
+      const v=document.createElement('span'); v.className='t-val'; v.textContent=fmtQty(p[s]||0);
+      row.append(key,v);
+      tooltip.appendChild(row);
+    });
+    tooltip.classList.add('show');
+    const shellRect = shell.getBoundingClientRect();
+    positionTooltip(tooltip, shellRect, clientX-shellRect.left, clientY-shellRect.top);
+  }
+  function hide(){ chLine.style.opacity=0; series.forEach(s=>hoverDots[s].style.opacity=0); tooltip.classList.remove('show'); }
+  hit.addEventListener('pointermove',(e)=>showAt(e.clientX,e.clientY));
+  hit.addEventListener('pointerleave',hide);
+}
+drawQtyChart();
+
+(function renderQtyLegend(){
+  const wrap = document.getElementById('qtyLegend');
+  DATA.qty_products.forEach(s=>{
+    const item=document.createElement('span'); item.className='item';
+    const sw=document.createElement('span'); sw.className='swatch-line';
+    sw.style.background=`var(${P_VAR[s]})`;
+    const txt=document.createElement('span'); txt.textContent=s;
+    item.append(sw,txt);
+    wrap.appendChild(item);
+  });
+})();
+
+function renderQtyTable(){
+  const table = document.getElementById('qtyTable');
+  const monthly = new Map();
+  DATA.qty_series.forEach(r=>{
+    const ym = r.date.slice(0,7);
+    if(!monthly.has(ym)) monthly.set(ym, Object.fromEntries(DATA.qty_products.map(p=>[p,0])));
+    const bucket = monthly.get(ym);
+    DATA.qty_products.forEach(p=>{ bucket[p]+= (r[p]||0); });
+  });
+  const rows = Array.from(monthly.entries()).sort((a,b)=>a[0].localeCompare(b[0]));
+  let thead = '<thead><tr><th>월</th>'+DATA.qty_products.map(p=>`<th>${p}</th>`).join('')+'</tr></thead>';
+  let tbody = '<tbody>'+rows.map(([ym,vals])=>{
+    return '<tr><td>'+ym+'</td>'+DATA.qty_products.map(p=>`<td>${fmtQty(vals[p])}</td>`).join('')+'</tr>';
+  }).join('')+'</tbody>';
+  table.innerHTML = thead+tbody;
+}
+renderQtyTable();
+
+/* ============================================================
+   product portfolio composition
+   ============================================================ */
+(function renderPortfolio(){
+  const wrap = document.getElementById('portfolioGrid');
+  const groups = Object.entries(DATA.product_master_by_group).sort((a,b)=>b[1].length-a[1].length);
+  const max = Math.max(...groups.map(([,list])=>list.length));
+  groups.forEach(([name,list])=>{
+    const card = document.createElement('div'); card.className='pgroup';
+    card.title = list.map(p=>p.name).join(', ');
+    const nm = document.createElement('div'); nm.className='pname'; nm.textContent = name;
+    const bar = document.createElement('div'); bar.className='pbar';
+    bar.style.width = (list.length/max*100)+'%';
+    const cnt = document.createElement('div'); cnt.className='pcount'; cnt.textContent = list.length+'개 SKU';
+    card.append(nm,bar,cnt);
+    wrap.appendChild(card);
+  });
+
+  const badgeWrap = document.getElementById('kpiBadges');
+  const kpiColors = {'핵심제품':'var(--accent)','기타제품':'var(--axis)','GWP':'var(--c-smart-store)','제외':'var(--critical)'};
+  Object.entries(DATA.kpi_category_counts).forEach(([k,v])=>{
+    const b = document.createElement('span'); b.className='kbadge';
+    const dot = document.createElement('span'); dot.className='kdot';
+    dot.style.background = kpiColors[k] || 'var(--text-muted)';
+    const txt = document.createElement('span'); txt.textContent = k+' ';
+    const strong = document.createElement('b'); strong.textContent = v+'개';
+    b.append(dot,txt,strong);
+    badgeWrap.appendChild(b);
+  });
+})();
+
+/* ============================================================
+   AD PERFORMANCE
+   ============================================================ */
+const AD_CH_LABEL = {
+  FACEBOOK:'Meta(Facebook)', GOOGLE_ADS:'Google Ads', NAVER_GFA:'네이버 GFA', NAVER_SA:'네이버 SA',
+  KAKAOMOMENT:'카카오모먼트', COUPANG_AD:'쿠팡 광고', TIKTOK:'틱톡'
+};
+const AD_CH_VAR = {
+  FACEBOOK:'--pr-1', GOOGLE_ADS:'--pr-2', NAVER_GFA:'--pr-3', NAVER_SA:'--pr-4',
+  KAKAOMOMENT:'--pr-5', COUPANG_AD:'--pr-6', TIKTOK:'--pr-7'
+};
+
+function renderAdKpis(compareSnap){
+  const ads = DATA.ads;
+  document.getElementById('adKpiSpend').textContent = fmtEok(ads.grand_spend);
+  document.getElementById('adKpiSpendSub').textContent = `${ads.date_range[0]} ~ ${ads.date_range[1]} · 7개 매체`;
+  document.getElementById('adKpiValue').textContent = fmtEok(ads.grand_value);
+  document.getElementById('adKpiRoas').textContent = ads.grand_roas.toLocaleString('ko-KR',{maximumFractionDigits:1})+'%';
+  document.getElementById('adKpiCpa').textContent = fmtWon(ads.grand_cpa);
+  document.getElementById('adKpiCpaSub').textContent = `구매 전환 ${ads.grand_conversions.toLocaleString('ko-KR')}건 기준`;
+
+  const cSpend = compareSnap ? compareSnap.grand_spend : null;
+  const cValue = compareSnap ? compareSnap.grand_value : null;
+  const cRoas = compareSnap && compareSnap.grand_spend ? compareSnap.grand_value/compareSnap.grand_spend*100 : null;
+  const cCpa = compareSnap && compareSnap.grand_conversions ? compareSnap.grand_spend/compareSnap.grand_conversions : null;
+  appendDeltaBadge('adKpiSpend', ads.grand_spend, cSpend);
+  appendDeltaBadge('adKpiValue', ads.grand_value, cValue);
+  appendDeltaBadge('adKpiRoas', ads.grand_roas, cRoas, {points:true});
+  appendDeltaBadge('adKpiCpa', ads.grand_cpa, cCpa, {invert:true});
+}
+renderAdKpis(null);
+
+const adTrendState = { gran: 'day' };
+function aggregateAdTrend(gran){
+  const src = gran==='day' ? DATA.ads.daily_series : DATA.ads.monthly_series;
+  return src.map(r=>({label: gran==='day' ? r.date : r.month, spend:r.spend_total, value:r.value_total}));
+}
+function drawAdTrendChart(){
+  const points = aggregateAdTrend(adTrendState.gran);
+  const svg = document.getElementById('adTrendChart');
+  const W=980, H=300, M={t:16,r:16,b:28,l:56};
+  const plotW=W-M.l-M.r, plotH=H-M.t-M.b;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = '';
+  const ns='http://www.w3.org/2000/svg';
+  const g = document.createElementNS(ns,'g');
+
+  const maxVal = niceNumber(Math.max(...points.map(p=>Math.max(p.spend,p.value))) * 1.15);
+  const x = (i) => M.l + (points.length===1?0:(i/(points.length-1))*plotW);
+  const y = (v) => M.t + plotH - (v/maxVal)*plotH;
+
+  const steps=4;
+  for(let s=0;s<=steps;s++){
+    const val = maxVal/steps*s;
+    const yy = y(val);
+    const line = document.createElementNS(ns,'line');
+    line.setAttribute('x1',M.l); line.setAttribute('x2',W-M.r);
+    line.setAttribute('y1',yy); line.setAttribute('y2',yy);
+    line.setAttribute('class','gridline');
+    g.appendChild(line);
+    const label = document.createElementNS(ns,'text');
+    label.setAttribute('x',M.l-8); label.setAttribute('y',yy+3);
+    label.setAttribute('text-anchor','end'); label.setAttribute('class','axis-text');
+    label.textContent = val===0?'0':(val/1e8).toLocaleString('ko-KR',{maximumFractionDigits:1})+'억';
+    g.appendChild(label);
+  }
+  const tickCount = Math.min(points.length, adTrendState.gran==='day'?7:9);
+  for(let t=0;t<tickCount;t++){
+    const idx = Math.round(t*(points.length-1)/(tickCount-1||1));
+    const xx = x(idx);
+    const label = document.createElementNS(ns,'text');
+    label.setAttribute('x',xx); label.setAttribute('y',H-8);
+    label.setAttribute('text-anchor','middle'); label.setAttribute('class','axis-text');
+    label.textContent = adTrendState.gran==='month' ? fmtMonth(points[idx].label) : fmtDate(points[idx].label);
+    g.appendChild(label);
+  }
+
+  let areaPath = `M ${x(0)} ${y(0)} `;
+  points.forEach((p,i)=>{ areaPath += `L ${x(i)} ${y(p.value)} `; });
+  areaPath += `L ${x(points.length-1)} ${y(0)} Z`;
+  const area = document.createElementNS(ns,'path');
+  area.setAttribute('d', areaPath); area.setAttribute('fill','var(--accent)'); area.setAttribute('opacity','0.10');
+  g.appendChild(area);
+
+  function drawLine(key, colorVar){
+    let d = '';
+    points.forEach((p,i)=>{ d += (i===0?'M ':'L ') + x(i) + ' ' + y(p[key]) + ' '; });
+    const line = document.createElementNS(ns,'path');
+    line.setAttribute('d', d); line.setAttribute('fill','none');
+    line.setAttribute('stroke', colorVar); line.setAttribute('stroke-width','2');
+    line.setAttribute('stroke-linejoin','round'); line.setAttribute('stroke-linecap','round');
+    g.appendChild(line);
+    const last = points[points.length-1];
+    const dot = document.createElementNS(ns,'circle');
+    dot.setAttribute('cx', x(points.length-1)); dot.setAttribute('cy', y(last[key]));
+    dot.setAttribute('r','5'); dot.setAttribute('fill', colorVar);
+    dot.setAttribute('stroke','var(--surface-raised)'); dot.setAttribute('stroke-width','2');
+    g.appendChild(dot);
+  }
+  drawLine('spend', 'var(--axis)');
+  drawLine('value', 'var(--accent)');
+
+  const hoverSpend = document.createElementNS(ns,'circle');
+  hoverSpend.setAttribute('r','5'); hoverSpend.setAttribute('fill','var(--axis)');
+  hoverSpend.setAttribute('stroke','var(--surface-raised)'); hoverSpend.setAttribute('stroke-width','2'); hoverSpend.setAttribute('opacity','0');
+  const hoverValue = document.createElementNS(ns,'circle');
+  hoverValue.setAttribute('r','5'); hoverValue.setAttribute('fill','var(--accent)');
+  hoverValue.setAttribute('stroke','var(--surface-raised)'); hoverValue.setAttribute('stroke-width','2'); hoverValue.setAttribute('opacity','0');
+  g.append(hoverSpend, hoverValue);
+
+  const chLine = document.createElementNS(ns,'line');
+  chLine.setAttribute('y1',M.t); chLine.setAttribute('y2',H-M.b); chLine.setAttribute('class','crosshair');
+  g.appendChild(chLine);
+
+  const hit = document.createElementNS(ns,'rect');
+  hit.setAttribute('x',M.l); hit.setAttribute('y',M.t); hit.setAttribute('width',plotW); hit.setAttribute('height',plotH);
+  hit.setAttribute('fill','transparent'); hit.style.cursor='crosshair';
+  g.appendChild(hit);
+  svg.appendChild(g);
+
+  const shell = document.getElementById('adTrendShell');
+  const tooltip = document.getElementById('adTrendTooltip');
+  function showAt(clientX, clientY){
+    const rect = svg.getBoundingClientRect();
+    const svgX = (clientX-rect.left)/rect.width*W;
+    let idx = Math.round((svgX-M.l)/plotW*(points.length-1));
+    idx = Math.max(0, Math.min(points.length-1, idx));
+    const p = points[idx];
+    chLine.setAttribute('x1', x(idx)); chLine.setAttribute('x2', x(idx)); chLine.style.opacity=1;
+    hoverSpend.setAttribute('cx', x(idx)); hoverSpend.setAttribute('cy', y(p.spend)); hoverSpend.style.opacity=1;
+    hoverValue.setAttribute('cx', x(idx)); hoverValue.setAttribute('cy', y(p.value)); hoverValue.style.opacity=1;
+
+    const dateLabel = adTrendState.gran==='day' ? p.label : `2026년 ${fmtMonth(p.label)}`;
+    tooltip.innerHTML = '';
+    const d1 = document.createElement('div'); d1.className='t-date'; d1.textContent = dateLabel;
+    tooltip.appendChild(d1);
+    [['광고비','spend','var(--axis)'],['전환값','value','var(--accent)']].forEach(([lbl,key,color])=>{
+      const row = document.createElement('div'); row.className='t-row';
+      const k = document.createElement('span'); k.className='t-key';
+      const lk = document.createElement('span'); lk.className='t-line'; lk.style.background=color;
+      const t = document.createElement('span'); t.textContent = lbl;
+      k.append(lk,t);
+      const v = document.createElement('span'); v.className='t-val'; v.textContent = fmtWon(p[key]);
+      row.append(k,v);
+      tooltip.appendChild(row);
+    });
+    const roasRow = document.createElement('div'); roasRow.className='t-total';
+    const rl = document.createElement('span'); rl.textContent='ROAS';
+    const rv = document.createElement('span'); rv.textContent = p.spend? fmtPct(p.value/p.spend*100) : '-';
+    roasRow.append(rl,rv);
+    tooltip.appendChild(roasRow);
+    tooltip.classList.add('show');
+    const shellRect = shell.getBoundingClientRect();
+    positionTooltip(tooltip, shellRect, clientX-shellRect.left, clientY-shellRect.top);
+  }
+  function hide(){ chLine.style.opacity=0; hoverSpend.style.opacity=0; hoverValue.style.opacity=0; tooltip.classList.remove('show'); }
+  hit.addEventListener('pointermove',(e)=>showAt(e.clientX,e.clientY));
+  hit.addEventListener('pointerleave',hide);
+}
+drawAdTrendChart();
+document.getElementById('adGranSeg').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  document.querySelectorAll('#adGranSeg button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  adTrendState.gran = btn.dataset.gran;
+  drawAdTrendChart();
+});
+
+(function renderAdTrendLegend(){
+  const wrap = document.getElementById('adTrendLegend');
+  [['광고비','var(--axis)'],['전환값(추정 매출 기여)','var(--accent)']].forEach(([label,color])=>{
+    const item = document.createElement('span'); item.className='item';
+    const sw = document.createElement('span'); sw.className='swatch-line'; sw.style.background=color;
+    const txt = document.createElement('span'); txt.textContent=label;
+    item.append(sw,txt);
+    wrap.appendChild(item);
+  });
+})();
+
+function renderAdTrendTable(){
+  const table = document.getElementById('adTrendTable');
+  let thead = '<thead><tr><th>월</th><th>광고비</th><th>전환값</th><th>ROAS</th><th>전환수</th><th>CPA</th></tr></thead>';
+  let tbody = '<tbody>' + DATA.ads.monthly_series.map(m=>{
+    return `<tr><td>${m.month}</td><td>${fmtWon(m.spend_total)}</td><td>${fmtWon(m.value_total)}</td><td>${m.roas.toLocaleString('ko-KR',{maximumFractionDigits:1})}%</td><td>${m.conversions.toLocaleString('ko-KR')}건</td><td>${fmtWon(m.cpa)}</td></tr>`;
+  }).join('') + '</tbody>';
+  table.innerHTML = thead + tbody;
+}
+renderAdTrendTable();
+
+function drawAdStackChart(){
+  const svg = document.getElementById('adStackChart');
+  const months = DATA.ads.monthly_series;
+  const channels = DATA.ads.channels;
+  const W=560, H=300, M={t:14,r:14,b:26,l:52};
+  const plotW=W-M.l-M.r, plotH=H-M.t-M.b;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = '';
+  const ns='http://www.w3.org/2000/svg';
+  const g = document.createElementNS(ns,'g');
+
+  const maxTotal = niceNumber(Math.max(...months.map(m=>m.spend_total)) * 1.1);
+  const y = (v) => M.t + plotH - (v/maxTotal)*plotH;
+  const steps=4;
+  for(let s=0;s<=steps;s++){
+    const val = maxTotal/steps*s;
+    const yy = y(val);
+    const line = document.createElementNS(ns,'line');
+    line.setAttribute('x1',M.l); line.setAttribute('x2',W-M.r);
+    line.setAttribute('y1',yy); line.setAttribute('y2',yy);
+    line.setAttribute('class','gridline');
+    g.appendChild(line);
+    const label = document.createElementNS(ns,'text');
+    label.setAttribute('x',M.l-8); label.setAttribute('y',yy+3);
+    label.setAttribute('text-anchor','end'); label.setAttribute('class','axis-text');
+    label.textContent = val===0?'0':(val/1e8).toLocaleString('ko-KR',{maximumFractionDigits:1})+'억';
+    g.appendChild(label);
+  }
+
+  const bandW = plotW/months.length;
+  const barW = Math.min(40, bandW*0.55);
+  const gap = 2;
+  const shell = document.getElementById('adStackShell');
+  const tooltip = document.getElementById('adStackTooltip');
+
+  months.forEach((m,mi)=>{
+    const cx = M.l + bandW*mi + bandW/2;
+    let cursorY = M.t + plotH;
+    channels.forEach(ch=>{
+      const val = m[ch]||0;
+      if(val<=0) return;
+      const h = (val/maxTotal)*plotH;
+      const rectH = Math.max(0, h-gap);
+      const ry = cursorY - h;
+      const rect = document.createElementNS(ns,'rect');
+      rect.setAttribute('x', cx-barW/2); rect.setAttribute('y', ry);
+      rect.setAttribute('width', barW); rect.setAttribute('height', rectH);
+      rect.setAttribute('rx', 2);
+      rect.setAttribute('fill', `var(${AD_CH_VAR[ch]})`);
+      rect.style.cursor='pointer';
+      rect.addEventListener('pointerenter', ()=>rect.setAttribute('opacity','0.82'));
+      rect.addEventListener('pointerleave', ()=>{rect.setAttribute('opacity','1'); tooltip.classList.remove('show');});
+      rect.addEventListener('pointermove', (e)=>{
+        rect.setAttribute('opacity','0.82');
+        tooltip.innerHTML='';
+        const d1=document.createElement('div'); d1.className='t-date'; d1.textContent = `2026년 ${fmtMonth(m.month)}`;
+        const row=document.createElement('div'); row.className='t-row';
+        const key=document.createElement('span'); key.className='t-key';
+        const lineKey=document.createElement('span'); lineKey.className='t-line'; lineKey.style.background=`var(${AD_CH_VAR[ch]})`;
+        const lbl=document.createElement('span'); lbl.textContent = AD_CH_LABEL[ch];
+        key.append(lineKey,lbl);
+        const val2=document.createElement('span'); val2.className='t-val';
+        val2.textContent = fmtWon(val) + ` (${fmtPct(val/m.spend_total*100)})`;
+        row.append(key,val2);
+        tooltip.append(d1,row);
+        tooltip.classList.add('show');
+        const shellRect = shell.getBoundingClientRect();
+        positionTooltip(tooltip, shellRect, e.clientX-shellRect.left, e.clientY-shellRect.top);
+      });
+      g.appendChild(rect);
+      cursorY = ry;
+    });
+    const label = document.createElementNS(ns,'text');
+    label.setAttribute('x', cx); label.setAttribute('y', H-8);
+    label.setAttribute('text-anchor','middle'); label.setAttribute('class','axis-text');
+    label.textContent = fmtMonth(m.month);
+    g.appendChild(label);
+  });
+  svg.appendChild(g);
+}
+drawAdStackChart();
+
+(function renderAdStackLegend(){
+  const wrap = document.getElementById('adStackLegend');
+  DATA.ads.channels.forEach(ch=>{
+    const item = document.createElement('span'); item.className='item';
+    const sw = document.createElement('span'); sw.className='swatch-rect'; sw.style.background=`var(${AD_CH_VAR[ch]})`;
+    const txt = document.createElement('span'); txt.textContent = AD_CH_LABEL[ch];
+    item.append(sw,txt);
+    wrap.appendChild(item);
+  });
+})();
+
+function renderAdRankList(){
+  const ads = DATA.ads;
+  document.getElementById('adRankDesc').textContent = `${ads.date_range[0]} ~ ${ads.date_range[1]} 누적 기준, 광고비 순위.`;
+  const items = Object.entries(ads.channel_totals)
+    .sort((a,b)=>b[1]-a[1])
+    .map(([ch,val])=>({name: AD_CH_LABEL[ch], amount: val, colorVar: AD_CH_VAR[ch]}));
+  renderRankList('adRankList', items);
+}
+renderAdRankList();
+
+/* ---------------- 판매채널 매핑 기준 광고비 ---------------- */
+const AD_SALES_CH_LABEL = {
+  CAFE24:'자사몰(CAFE24)', SMART_STORE:'스마트스토어', OLIVE_YOUNG:'올리브영',
+  COUPANG:'쿠팡', KAKAO_EXTERNAL:'카카오 외부몰(톡딜·쇼핑 등)'
+};
+const AD_SALES_CH_VAR = {
+  CAFE24:'--c-cafe24', SMART_STORE:'--c-smart-store', OLIVE_YOUNG:'--c-olive-young',
+  COUPANG:'--c-coupang', KAKAO_EXTERNAL:'--c-kakao-gift'
+};
+function renderAdChannelRankList(){
+  const abc = DATA.ads_by_channel;
+  const items = Object.entries(abc.channel_totals)
+    .sort((a,b)=>b[1]-a[1])
+    .map(([ch,val])=>({name: AD_SALES_CH_LABEL[ch], amount: val, colorVar: AD_SALES_CH_VAR[ch]}));
+  renderRankList('adChannelRankList', items);
+}
+renderAdChannelRankList();
+
+function renderAdEfficiencyTable(){
+  const table = document.getElementById('adEfficiencyTable');
+  let thead = '<thead><tr><th>채널</th><th>광고비</th><th>매출</th><th>광고비 비중</th></tr></thead>';
+  let tbody = '<tbody>' + DATA.channel_ad_efficiency.map(r=>{
+    return `<tr><td>${AD_SALES_CH_LABEL[r.channel]}</td><td>${fmtWon(r.ad_spend)}</td><td>${fmtWon(r.revenue)}</td><td>${r.spend_pct_of_revenue.toLocaleString('ko-KR',{maximumFractionDigits:1})}%</td></tr>`;
+  }).join('') + '</tbody>';
+  table.innerHTML = thead + tbody;
+}
+renderAdEfficiencyTable();
+
+/* ============================================================
+   자사몰(CAFE24) 탭 — 제품별 광고비·매출·ROAS·CPM·CTR·CVR
+   ============================================================ */
+function renderCafe24Tab(){
+  const { start, end } = filterState;
+  const adRows = FULL.cafe24Ad.filter(r=>inRange(r.date, start, end));
+  const revRows = FULL.cafe24Rev.filter(r=>inRange(r.date, start, end));
+
+  const byProduct = new Map();
+  function ensure(name){
+    if(!byProduct.has(name)){
+      byProduct.set(name, { spend:0, impr:0, clicks:0, conv:0, value:0, revenue:0 });
+    }
+    return byProduct.get(name);
+  }
+  adRows.forEach(r=>{
+    const p = ensure(r.product);
+    p.spend += r.spend; p.impr += r.impr; p.clicks += r.clicks; p.conv += r.conv; p.value += r.value;
+  });
+  revRows.forEach(r=>{
+    ensure(r.product).revenue += r.revenue;
+  });
+
+  const totalSpend = Array.from(byProduct.values()).reduce((s,p)=>s+p.spend,0);
+  const totalRevenue = Array.from(byProduct.values()).reduce((s,p)=>s+p.revenue,0);
+
+  document.getElementById('c24KpiRevenue').textContent = fmtEok(totalRevenue);
+  document.getElementById('c24KpiRevenueSub').textContent = `${start} ~ ${end}`;
+  document.getElementById('c24KpiSpend').textContent = fmtEok(totalSpend);
+  document.getElementById('c24KpiSpendSub').textContent = `${start} ~ ${end}`;
+  const roas = totalSpend ? totalRevenue/totalSpend*100 : 0;
+  document.getElementById('c24KpiRoas').textContent = fmtPct(roas);
+  document.getElementById('c24KpiRoasSub').textContent = totalSpend ? `매출이 광고비의 ${(roas/100).toLocaleString('ko-KR',{maximumFractionDigits:1})}배` : '-';
+
+  const unclassified = DATA.cafe24.ad_unclassified_label;
+  const rows = Array.from(byProduct.entries())
+    .filter(([name])=> name !== unclassified && name !== '미매핑 (분류 안 됨)')
+    .sort((a,b)=>b[1].revenue-a[1].revenue);
+  const trailing = [unclassified, '미매핑 (분류 안 됨)']
+    .map(name=>[name, byProduct.get(name)])
+    .filter(([,p])=>p);
+
+  const table = document.getElementById('c24ProductTable');
+  const thead = '<thead><tr><th>제품</th><th>광고비</th><th>매출</th><th>ROAS</th><th>CPM</th><th>CTR</th><th>CVR</th></tr></thead>';
+  function rowHtml([name, p]){
+    const roasByRevenue = p.spend ? p.revenue/p.spend*100 : null;
+    const cpm = p.impr ? p.spend/p.impr*1000 : null;
+    const ctr = p.impr ? p.clicks/p.impr*100 : null;
+    const cvr = p.clicks ? p.conv/p.clicks*100 : null;
+    const fmt1 = v => v==null ? '-' : v.toLocaleString('ko-KR',{maximumFractionDigits:1})+'%';
+    return `<tr><td>${name}</td><td>${fmtWon(p.spend)}</td><td>${fmtWon(p.revenue)}</td><td>${fmt1(roasByRevenue)}</td><td>${p.impr? fmtWon(Math.round(cpm)) : '-'}</td><td>${fmt1(ctr)}</td><td>${fmt1(cvr)}</td></tr>`;
+  }
+  let tbody = '<tbody>' + rows.map(rowHtml).join('') + trailing.map(rowHtml).join('') + '</tbody>';
+  table.innerHTML = thead + tbody;
+}
+renderCafe24Tab();
+
+/* ---------------- 탭 전환 ---------------- */
+(function wireTabSwitch(){
+  const btns = document.querySelectorAll('#tabSwitch .tabswitch-btn');
+  const mainPanel = document.getElementById('mainDashboardPanel');
+  const c24Panel = document.getElementById('cafe24Panel');
+  btns.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      btns.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab;
+      mainPanel.hidden = tab !== 'main';
+      c24Panel.hidden = tab !== 'cafe24';
+    });
+  });
+})();
+
+wireFilterBar();
+</script>

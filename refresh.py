@@ -466,7 +466,7 @@ def build_creative_winners(ad_rows: list[list[str]]):
                 "ctr": round(totals["clicks"] / totals["impr"] * 100, 2) if totals["impr"] else 0,
                 "conversions": round(totals["conv"]),
             })
-        candidates.sort(key=lambda c: -c["roas"])
+        candidates.sort(key=lambda c: -c["value"])
         return candidates[:WINNER_TOP_N]
 
     all_scope = [(key, entry["all"]) for key, entry in creatives.items()]

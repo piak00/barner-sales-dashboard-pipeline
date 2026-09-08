@@ -674,7 +674,7 @@
       <div class="card-head">
         <div>
           <h2 class="card-title">기간별 위너 소재</h2>
-          <p class="card-desc" id="winnerDesc">광고비 상위 소재 중 ROAS 순위.</p>
+          <p class="card-desc" id="winnerDesc">광고비 상위 소재 중 전환값 순위.</p>
         </div>
         <select class="month-select" id="winnerMonthSel"></select>
       </div>
@@ -1943,7 +1943,7 @@ renderAdEfficiencyTable();
     const rows = scope==='all' ? bucket.all : (bucket.by_month[scope]||[]);
     const scopeLabel = scope==='all' ? '전체 기간' : `2026년 ${fmtMonth(scope)}`;
     document.getElementById('winnerDesc').textContent =
-      `${scopeLabel} · ${WINNER_CH_LABEL[activeChannel]} 기준, 광고비 ${fmtWon(cw.min_spend)} 이상 소재 중 ROAS 상위 ${cw.top_n}개. (자사몰(CAFE24)에 매핑된 소재만 집계)`;
+      `${scopeLabel} · ${WINNER_CH_LABEL[activeChannel]} 기준, 광고비 ${fmtWon(cw.min_spend)} 이상 소재 중 전환값 상위 ${cw.top_n}개. (자사몰(CAFE24)에 매핑된 소재만 집계)`;
     const table = document.getElementById('winnerTable');
     const thead = '<thead><tr><th>순위</th><th>매체</th><th>광고 소재명</th><th>광고비</th><th>전환값</th><th>ROAS</th><th>CTR</th><th>전환수</th></tr></thead>';
     let tbody = '<tbody>' + rows.map((r,i)=>{

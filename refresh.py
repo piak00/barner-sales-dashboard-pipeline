@@ -33,31 +33,32 @@ CORE_PRODUCTS = ['EMS 미니스팟', '아치스본 스포츠', '아치스본 슬
 TOP_N_PRODUCTS = 8
 AD_CHANNEL_ORDER = ['FACEBOOK', 'GOOGLE_ADS', 'NAVER_GFA', 'NAVER_SA', 'KAKAOMOMENT', 'COUPANG_AD', 'TIKTOK']
 
-# 자사몰(CAFE24) 탭의 제품별 광고 성과용 — 캠페인/광고세트/광고명에서 제품을 추정하는 키워드
-# (사이트의 옵션_PRODUCT_MAP과는 별개로, 광고 소재명 표기 관행에 맞춰 별도로 확인한 키워드다.
-#  길게/구체적인 키워드부터 먼저 매칭해서 오탐을 줄인다.)
-PRODUCT_AD_KEYWORDS = [
-    ('미니스팟', 'EMS 미니스팟'),
-    ('아치스포츠', '아치스본 스포츠'),
-    ('아치슬리퍼', '아치스본 슬리퍼'),
-    ('아치밸런스', '아치스본 밸런스'),
-    ('아치프로', '아치스본 프로'),
-    ('아치액션', '아치스본 액션'),
-    ('EMS버닝벨트', 'EMS 버닝벨트'),
-    ('괄사세럼', '바디괄사 세럼'),
-    ('바디괄사', '바디괄사 세럼'),
-    ('지압스텝퍼', '지압 스텝퍼'),
-    ('클리어풋', '클리어풋 제로 파우더'),
-]
-AD_UNCLASSIFIED = '광고 미분류(복수제품·프로모션)'
+# 자사몰(CAFE24) 탭의 제품별 광고 성과용 — 바르너_광고소재 탭 R열(사용자가 직접 채워넣은 제품 태그)을
+# 대시보드 전반에서 쓰는 표준 제품명으로 맞춰준다. R열 자체가 없거나 목록에 없는 값은 미분류로 묶는다.
+AD_PRODUCT_COLUMN_INDEX = 17  # R열 (0-indexed)
+AD_UNCLASSIFIED = '광고 미분류'
+AD_PROMOTION = '프로모션(복수제품)'
+R_VALUE_TO_PRODUCT = {
+    '미니스팟': 'EMS 미니스팟',
+    '아치스포츠': '아치스본 스포츠',
+    '아치슬리퍼': '아치스본 슬리퍼',
+    '아치밸런스': '아치스본 밸런스',
+    '아치프로': '아치스본 프로',
+    'EMS벨트': 'EMS 버닝벨트',
+    '괄사세럼': '바디괄사 세럼',
+    '버닝벨트': '버닝벨트',
+    '아치시리즈': '아치스본',
+    '풋파우더': '클리어풋 제로 파우더',
+    'ems슬리퍼': '아치스본 EMS 슬리퍼',
+    '프로모션': AD_PROMOTION,
+    '기타': AD_UNCLASSIFIED,
+    '': AD_UNCLASSIFIED,
+}
 
 
-def match_product_from_ad_text(text: str) -> str:
-    norm = text.replace(' ', '')
-    for kw, product in PRODUCT_AD_KEYWORDS:
-        if kw in norm:
-            return product
-    return AD_UNCLASSIFIED
+def product_from_row(row: list[str]) -> str:
+    r_val = row[AD_PRODUCT_COLUMN_INDEX].strip() if len(row) > AD_PRODUCT_COLUMN_INDEX else ''
+    return R_VALUE_TO_PRODUCT.get(r_val, AD_UNCLASSIFIED)
 
 # 광고 소재의 캠페인명을 실제 판매채널로 매핑 (사용자 확정 규칙):
 #   FACEBOOK: 캠페인명에 올영세일/올리브영 -> 올리브영, 그 외 -> 자사몰(CAFE24)
@@ -357,8 +358,8 @@ def build_ads(rows: list[list[str]]):
 def build_cafe24_products(ad_rows: list[list[str]], revenue_rows: list[list[str]]):
     """자사몰(CAFE24) 탭: 일자·제품별 광고비/노출/클릭/전환/전환값 + 매출.
 
-    광고 쪽은 캠페인/광고세트/광고명에서 제품을 키워드로 추정하고(PRODUCT_AD_KEYWORDS),
-    매칭되지 않으면 AD_UNCLASSIFIED로 묶는다. 매출 쪽은 매출_RAW_CLEAN의 단일 제품명을 그대로 쓴다.
+    광고 쪽 제품 태그는 바르너_광고소재 탭 R열(사용자가 직접 입력)을 그대로 쓴다.
+    매출 쪽은 매출_RAW_CLEAN의 단일 제품명을 그대로 쓴다.
     """
     ad_header, *ad_data = ad_rows
     ad_data = [r for r in ad_data if len(r) > 10 and r[0].strip()]
@@ -370,7 +371,7 @@ def build_cafe24_products(ad_rows: list[list[str]], revenue_rows: list[list[str]
         date, ch, campaign, adset, ad = row[0], row[1], row[2], row[3], row[4]
         if map_ad_to_sales_channel(ch, campaign) != 'CAFE24':
             continue
-        product = match_product_from_ad_text(f"{campaign} {adset} {ad}")
+        product = product_from_row(row)
         d = ad_daily[date][product]
         d["spend"] += parse_pct_or_num(row[6])
         d["impr"] += parse_pct_or_num(row[7])
@@ -413,7 +414,7 @@ def build_cafe24_products(ad_rows: list[list[str]], revenue_rows: list[list[str]
 
 
 WINNER_MIN_SPEND = 300000  # 이 금액(원) 미만 광고비를 쓴 소재는 위너 후보에서 제외 (노이즈 방지)
-WINNER_TOP_N = 10
+WINNER_TOP_N = 20
 # 자사몰(CAFE24) 위너 소재는 이 3개 매체만 본다 (사용자 확정 범위)
 WINNER_CHANNELS = ('FACEBOOK', 'GOOGLE_ADS', 'TIKTOK')
 
@@ -456,7 +457,10 @@ def build_creative_winners(ad_rows: list[list[str]]):
             continue
         if key not in creative_id:
             creative_id[key] = len(creatives_list)
-            creatives_list.append({"channel": ch, "campaign": campaign, "adset": adset, "ad": ad})
+            creatives_list.append({
+                "channel": ch, "campaign": campaign, "adset": adset, "ad": ad,
+                "product": product_from_row(row),
+            })
         daily_rows.append({
             "date": date, "id": creative_id[key],
             "spend": round(spend), "impr": round(impr), "clicks": round(clicks),

@@ -793,6 +793,7 @@ function appendDeltaBadge(valueElId, current, compare, opts){
 
 /* ---------------- 기간 필터 상태 + 적용 ---------------- */
 let filterState = { start: FULL_START, end: FULL_END, compare: false, cStart: null, cEnd: null };
+let c24SelectedProduct = 'all'; // 자사몰 탭 제품 선택 — 위너 소재 테이블도 이 값을 따라간다
 
 function applyFilters(){
   const { start, end } = filterState;
@@ -1944,11 +1945,13 @@ function renderWinnerTable(){
     .filter(([,t])=>t.spend > 0)
     .map(([id,t])=>({ ...cw.creatives[id], ...t }))
     .filter(r => winnerActiveChannel==='ALL' || r.channel===winnerActiveChannel)
+    .filter(r => c24SelectedProduct==='all' || r.product===c24SelectedProduct)
     .sort((a,b)=>b.value-a.value)
     .slice(0, cw.top_n);
 
+  const productLabel = c24SelectedProduct==='all' ? '' : ` · "${c24SelectedProduct}"`;
   document.getElementById('winnerDesc').textContent =
-    `${start} ~ ${end} · ${WINNER_CH_LABEL[winnerActiveChannel]} 기준, 전체 기간 광고비 ${fmtWon(cw.min_spend)} 이상인 소재 중 전환값 상위 ${cw.top_n}개. (자사몰(CAFE24)에 매핑된 소재만 집계)`;
+    `${start} ~ ${end} · ${WINNER_CH_LABEL[winnerActiveChannel]}${productLabel} 기준, 전체 기간 광고비 ${fmtWon(cw.min_spend)} 이상인 소재 중 전환값 상위 ${cw.top_n}개. (자사몰(CAFE24)에 매핑된 소재만 집계)`;
   const table = document.getElementById('winnerTable');
   const thead = '<thead><tr><th>순위</th><th>매체</th><th>광고 소재명</th><th>광고비</th><th>전환값</th><th>ROAS</th><th>CTR</th><th>전환수</th></tr></thead>';
   let tbody = '<tbody>' + rows.map((r,i)=>{
@@ -2109,7 +2112,6 @@ function cafe24DailySeries(adRows, revRows){
   return days;
 }
 
-let c24SelectedProduct = 'all';
 (function initC24ProductSelector(){
   const unclassified = DATA.cafe24.ad_unclassified_label;
   const unmapped = '미매핑 (분류 안 됨)';
@@ -2132,6 +2134,7 @@ let c24SelectedProduct = 'all';
   sel.addEventListener('change', ()=>{
     c24SelectedProduct = sel.value;
     renderCafe24Tab();
+    renderWinnerTable();
   });
 })();
 

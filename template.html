@@ -375,6 +375,7 @@
   <div class="tabswitch" id="tabSwitch">
     <button class="tabswitch-btn active" data-tab="main">전체 대시보드</button>
     <button class="tabswitch-btn" data-tab="cafe24">자사몰(CAFE24)</button>
+    <button class="tabswitch-btn" data-tab="oliveyoung">올리브영</button>
   </div>
 
   <div id="mainDashboardPanel">
@@ -709,6 +710,102 @@
     </section>
   </div>
 
+  <div id="oliveYoungPanel" hidden>
+    <div class="kpis" style="grid-template-columns:repeat(3,1fr);">
+      <div class="kpi">
+        <span class="label">올리브영 매출</span>
+        <span class="value" id="oyKpiRevenue">-</span>
+        <span class="sub" id="oyKpiRevenueSub">-</span>
+      </div>
+      <div class="kpi">
+        <span class="label">올리브영 광고비</span>
+        <span class="value" id="oyKpiSpend">-</span>
+        <span class="sub" id="oyKpiSpendSub">-</span>
+      </div>
+      <div class="kpi">
+        <span class="label">ROAS (매출 ÷ 광고비)</span>
+        <span class="value" id="oyKpiRoas">-</span>
+        <span class="sub" id="oyKpiRoasSub">-</span>
+      </div>
+    </div>
+
+    <div class="filterbar" style="margin-bottom:20px;">
+      <div class="filter-group">
+        <span class="filter-label">제품</span>
+        <select id="oyProductSel"></select>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title">매출 · 광고비 추이</h2>
+          <p class="card-desc" id="oyTrendDesc">올리브영(OLIVE_YOUNG)에 매핑된 광고 소재 기준 일별 광고비와 매출(결제금액(-vat) 기준).</p>
+        </div>
+      </div>
+      <div class="chart-shell" id="oyTrendShell">
+        <svg class="chart" id="oyTrendChart" viewBox="0 0 980 260"></svg>
+        <div class="tooltip" id="oyTrendTooltip"></div>
+      </div>
+      <div class="legend" id="oyTrendLegend"></div>
+    </section>
+
+    <div class="row-2">
+      <section class="card">
+        <div class="card-head"><div><h2 class="card-title">ROAS 추이</h2><p class="card-desc">일별 매출 ÷ 광고비.</p></div></div>
+        <div class="chart-shell" id="oyRoasShell">
+          <svg class="chart" id="oyRoasChart" viewBox="0 0 470 200"></svg>
+          <div class="tooltip" id="oyRoasTooltip"></div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-head"><div><h2 class="card-title">CPM 추이</h2><p class="card-desc">노출 1,000회당 광고비.</p></div></div>
+        <div class="chart-shell" id="oyCpmShell">
+          <svg class="chart" id="oyCpmChart" viewBox="0 0 470 200"></svg>
+          <div class="tooltip" id="oyCpmTooltip"></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="row-2">
+      <section class="card">
+        <div class="card-head"><div><h2 class="card-title">CTR 추이</h2><p class="card-desc">노출 대비 클릭률.</p></div></div>
+        <div class="chart-shell" id="oyCtrShell">
+          <svg class="chart" id="oyCtrChart" viewBox="0 0 470 200"></svg>
+          <div class="tooltip" id="oyCtrTooltip"></div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-head"><div><h2 class="card-title">CPC 추이</h2><p class="card-desc">클릭 1회당 광고비.</p></div></div>
+        <div class="chart-shell" id="oyCpcShell">
+          <svg class="chart" id="oyCpcChart" viewBox="0 0 470 200"></svg>
+          <div class="tooltip" id="oyCpcTooltip"></div>
+        </div>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title">위너 소재</h2>
+          <p class="card-desc" id="oyWinnerDesc">광고비 상위 소재 중 전환값 순위. 상단에서 선택한 기간을 그대로 따릅니다.</p>
+        </div>
+      </div>
+      <div class="seg" id="oyWinnerChannelSeg" style="margin-bottom:12px;"></div>
+      <div class="tbl-scroll"><table id="oyWinnerTable"></table></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title">제품별 광고비 · 매출 · ROAS</h2>
+          <p class="card-desc">올리브영(OLIVE_YOUNG)에 매핑된 광고 소재만 집계 — 캠페인/광고세트/광고명에서 제품을 키워드로 추정합니다. 매출은 결제금액(-vat) 기준.</p>
+        </div>
+      </div>
+      <div class="tbl-scroll"><table id="oyProductTable"></table></div>
+    </section>
+  </div>
+
   <footer class="notes">
     <b>데이터 안내</b>
     <ul>
@@ -736,6 +833,9 @@ const FULL = {
   cafe24Ad: DATA.cafe24.ad_daily,
   cafe24Rev: DATA.cafe24.revenue_daily,
   creativeDaily: DATA.cafe24.creative_winners.daily,
+  oyAd: DATA.oliveyoung.ad_daily,
+  oyRev: DATA.oliveyoung.revenue_daily,
+  oyCreativeDaily: DATA.oliveyoung.creative_winners.daily,
 };
 const FULL_START = FULL.daily[0].date;
 const FULL_END = FULL.daily[FULL.daily.length-1].date;
@@ -821,6 +921,7 @@ function appendDeltaBadge(valueElId, current, compare, opts){
 /* ---------------- 기간 필터 상태 + 적용 ---------------- */
 let filterState = { start: FULL_START, end: FULL_END, compare: false, cStart: null, cEnd: null };
 let c24SelectedProduct = 'all'; // 자사몰 탭 제품 선택 — 위너 소재 테이블도 이 값을 따라간다
+let oySelectedProduct = 'all'; // 올리브영 탭 제품 선택 — 위너 소재 테이블도 이 값을 따라간다
 
 function applyFilters(){
   const { start, end } = filterState;
@@ -872,6 +973,8 @@ function applyFilters(){
   renderAdEfficiencyTable();
   renderCafe24Tab();
   renderWinnerTable();
+  renderOliveYoungTab();
+  renderOyWinnerTable();
 }
 
 /* ---------------- 필터바 UI 배선 ---------------- */
@@ -1995,6 +2098,64 @@ function renderWinnerTable(){
 }
 renderWinnerTable();
 
+/* ---------------- 올리브영 탭: 기간별 위너 소재 ---------------- */
+let oyWinnerActiveChannel = 'ALL';
+(function wireOyWinnerChannelSeg(){
+  const cw = DATA.oliveyoung.creative_winners;
+  const segWrap = document.getElementById('oyWinnerChannelSeg');
+  cw.channels.forEach((ch,i)=>{
+    const btn = document.createElement('button');
+    btn.textContent = WINNER_CH_LABEL[ch]||ch;
+    btn.dataset.ch = ch;
+    if(i===0) btn.classList.add('active');
+    btn.addEventListener('click', ()=>{
+      segWrap.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      oyWinnerActiveChannel = ch;
+      renderOyWinnerTable();
+    });
+    segWrap.appendChild(btn);
+  });
+})();
+
+function renderOyWinnerTable(){
+  const cw = DATA.oliveyoung.creative_winners;
+  const { start, end } = filterState;
+  const totals = new Map(); // id -> totals
+  FULL.oyCreativeDaily.forEach(r=>{
+    if(!inRange(r.date, start, end)) return;
+    if(!totals.has(r.id)) totals.set(r.id, {spend:0, impr:0, clicks:0, conv:0, value:0});
+    const t = totals.get(r.id);
+    t.spend += r.spend; t.impr += r.impr; t.clicks += r.clicks; t.conv += r.conv; t.value += r.value;
+  });
+
+  const rows = Array.from(totals.entries())
+    .filter(([,t])=>t.spend > 0)
+    .map(([id,t])=>({ ...cw.creatives[id], ...t }))
+    .filter(r => oyWinnerActiveChannel==='ALL' || r.channel===oyWinnerActiveChannel)
+    .filter(r => oySelectedProduct==='all' || r.product===oySelectedProduct)
+    .sort((a,b)=>b.value-a.value)
+    .slice(0, cw.top_n);
+
+  const productLabel = oySelectedProduct==='all' ? '' : ` · "${oySelectedProduct}"`;
+  document.getElementById('oyWinnerDesc').textContent =
+    `${start} ~ ${end} · ${WINNER_CH_LABEL[oyWinnerActiveChannel]}${productLabel} 기준, 전체 기간 광고비 ${fmtWon(cw.min_spend)} 이상인 소재 중 전환값 상위 ${cw.top_n}개. (올리브영(OLIVE_YOUNG)에 매핑된 소재만 집계)`;
+  const table = document.getElementById('oyWinnerTable');
+  const thead = '<thead><tr><th>순위</th><th>매체</th><th>광고 소재명</th><th>광고비</th><th>전환값</th><th>ROAS</th><th>CTR</th><th>전환수</th></tr></thead>';
+  let tbody = '<tbody>' + rows.map((r,i)=>{
+    const roas = r.spend ? (r.value/r.spend*100).toLocaleString('ko-KR',{maximumFractionDigits:1}) : '0';
+    const ctr = r.impr ? (r.clicks/r.impr*100).toLocaleString('ko-KR',{maximumFractionDigits:1}) : '0';
+    const title = escapeHtml(r.campaign+' › '+r.adset);
+    const name = escapeHtml(r.ad && r.ad.trim() ? r.ad : (r.adset || r.campaign));
+    return `<tr title="${title}"><td>${i+1}</td><td>${AD_CH_LABEL[r.channel]||r.channel}</td><td style="text-align:left; white-space:normal; max-width:320px;">${name}</td><td>${fmtWon(r.spend)}</td><td>${fmtWon(r.value)}</td><td>${roas}%</td><td>${ctr}%</td><td>${Math.round(r.conv).toLocaleString('ko-KR')}건</td></tr>`;
+  }).join('') + '</tbody>';
+  if(rows.length===0){
+    tbody = '<tbody><tr><td colspan="8" style="text-align:center; color:var(--text-muted);">이 기간에는 조건을 만족하는 소재가 없습니다</td></tr></tbody>';
+  }
+  table.innerHTML = thead + tbody;
+}
+renderOyWinnerTable();
+
 /* ============================================================
    자사몰(CAFE24) 탭 — 제품별 광고비·매출·ROAS·CPM·CTR·CVR
    ============================================================ */
@@ -2118,7 +2279,7 @@ function drawMiniLineChart(cfg){
   }
 }
 
-function cafe24DailySeries(adRows, revRows){
+function channelDailySeries(adRows, revRows){
   const byDate = new Map();
   function ensure(date){
     if(!byDate.has(date)) byDate.set(date, {date, spend:0, impr:0, clicks:0, conv:0, value:0, revenue:0});
@@ -2178,7 +2339,7 @@ function renderCafe24Tab(){
     ? `"${c24SelectedProduct}" 제품에 매핑된 광고 소재 기준 일별 광고비와 매출(결제금액(-vat) 기준).`
     : '자사몰(CAFE24)에 매핑된 광고 소재 기준 일별 광고비와 매출(결제금액(-vat) 기준).';
 
-  const daily = cafe24DailySeries(adRows, revRows);
+  const daily = channelDailySeries(adRows, revRows);
   drawMiniLineChart({
     svgId:'c24TrendChart', shellId:'c24TrendShell', tooltipId:'c24TrendTooltip', points: daily,
     series:[{key:'spend', colorVar:'--axis', label:'광고비'}, {key:'revenue', colorVar:'--c-cafe24', label:'매출'}],
@@ -2264,6 +2425,134 @@ function renderCafe24Tab(){
 }
 renderCafe24Tab();
 
+/* ============================================================
+   올리브영 탭 — 제품별 광고비·매출·ROAS·CPM·CTR·CVR
+   ============================================================ */
+(function initOyProductSelector(){
+  const unclassified = DATA.oliveyoung.ad_unclassified_label;
+  const unmapped = '미매핑 (분류 안 됨)';
+  const revByProduct = new Map();
+  FULL.oyRev.forEach(r=>{ revByProduct.set(r.product, (revByProduct.get(r.product)||0) + r.revenue); });
+  FULL.oyAd.forEach(r=>{ if(!revByProduct.has(r.product)) revByProduct.set(r.product, 0); });
+
+  const names = Array.from(revByProduct.keys())
+    .filter(n=> n!==unclassified && n!==unmapped)
+    .sort((a,b)=> (revByProduct.get(b)||0) - (revByProduct.get(a)||0));
+  const trailing = [unclassified, unmapped].filter(n=>revByProduct.has(n));
+
+  const sel = document.getElementById('oyProductSel');
+  const optAll = document.createElement('option'); optAll.value='all'; optAll.textContent='전체 제품 합산';
+  sel.appendChild(optAll);
+  [...names, ...trailing].forEach(name=>{
+    const opt = document.createElement('option'); opt.value=name; opt.textContent=name;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener('change', ()=>{
+    oySelectedProduct = sel.value;
+    renderOliveYoungTab();
+    renderOyWinnerTable();
+  });
+})();
+
+function renderOliveYoungTab(){
+  const { start, end } = filterState;
+  let adRows = FULL.oyAd.filter(r=>inRange(r.date, start, end));
+  let revRows = FULL.oyRev.filter(r=>inRange(r.date, start, end));
+  const scopedToProduct = oySelectedProduct !== 'all';
+  if(scopedToProduct){
+    adRows = adRows.filter(r=>r.product === oySelectedProduct);
+    revRows = revRows.filter(r=>r.product === oySelectedProduct);
+  }
+  document.getElementById('oyTrendDesc').textContent = scopedToProduct
+    ? `"${oySelectedProduct}" 제품에 매핑된 광고 소재 기준 일별 광고비와 매출(결제금액(-vat) 기준).`
+    : '올리브영(OLIVE_YOUNG)에 매핑된 광고 소재 기준 일별 광고비와 매출(결제금액(-vat) 기준).';
+
+  const daily = channelDailySeries(adRows, revRows);
+  drawMiniLineChart({
+    svgId:'oyTrendChart', shellId:'oyTrendShell', tooltipId:'oyTrendTooltip', points: daily,
+    series:[{key:'spend', colorVar:'--axis', label:'광고비'}, {key:'revenue', colorVar:'--c-olive-young', label:'매출'}],
+    yFmt: v => v===0?'0':(v/1e8>=0.1 ? (v/1e8).toLocaleString('ko-KR',{maximumFractionDigits:1})+'억' : Math.round(v/1e4).toLocaleString('ko-KR')+'만'),
+    tooltipFmt: fmtWon,
+  });
+  (function renderOyTrendLegend(){
+    const wrap = document.getElementById('oyTrendLegend'); wrap.innerHTML='';
+    [['광고비','var(--axis)'],['매출','var(--c-olive-young)']].forEach(([label,color])=>{
+      const item=document.createElement('span'); item.className='item';
+      const sw=document.createElement('span'); sw.className='swatch-line'; sw.style.background=color;
+      const txt=document.createElement('span'); txt.textContent=label;
+      item.append(sw,txt); wrap.appendChild(item);
+    });
+  })();
+  drawMiniLineChart({
+    svgId:'oyRoasChart', shellId:'oyRoasShell', tooltipId:'oyRoasTooltip', points: daily, leftMargin:44,
+    series:[{key:'roas', colorVar:'--accent', label:'ROAS'}],
+    yFmt: v => Math.round(v)+'%', tooltipFmt: v => fmtPct(v),
+  });
+  drawMiniLineChart({
+    svgId:'oyCpmChart', shellId:'oyCpmShell', tooltipId:'oyCpmTooltip', points: daily,
+    series:[{key:'cpm', colorVar:'--pr-2', label:'CPM'}],
+    yFmt: v => Math.round(v).toLocaleString('ko-KR'), tooltipFmt: v => fmtWon(v),
+  });
+  drawMiniLineChart({
+    svgId:'oyCtrChart', shellId:'oyCtrShell', tooltipId:'oyCtrTooltip', points: daily, leftMargin:44,
+    series:[{key:'ctr', colorVar:'--pr-3', label:'CTR'}],
+    yFmt: v => v.toLocaleString('ko-KR',{maximumFractionDigits:1})+'%', tooltipFmt: v => fmtPct(v),
+  });
+  drawMiniLineChart({
+    svgId:'oyCpcChart', shellId:'oyCpcShell', tooltipId:'oyCpcTooltip', points: daily,
+    series:[{key:'cpc', colorVar:'--pr-4', label:'CPC'}],
+    yFmt: v => Math.round(v).toLocaleString('ko-KR'), tooltipFmt: v => fmtWon(v),
+  });
+
+  const byProduct = new Map();
+  function ensure(name){
+    if(!byProduct.has(name)){
+      byProduct.set(name, { spend:0, impr:0, clicks:0, conv:0, value:0, revenue:0 });
+    }
+    return byProduct.get(name);
+  }
+  adRows.forEach(r=>{
+    const p = ensure(r.product);
+    p.spend += r.spend; p.impr += r.impr; p.clicks += r.clicks; p.conv += r.conv; p.value += r.value;
+  });
+  revRows.forEach(r=>{
+    ensure(r.product).revenue += r.revenue;
+  });
+
+  const totalSpend = Array.from(byProduct.values()).reduce((s,p)=>s+p.spend,0);
+  const totalRevenue = Array.from(byProduct.values()).reduce((s,p)=>s+p.revenue,0);
+
+  document.getElementById('oyKpiRevenue').textContent = fmtEok(totalRevenue);
+  document.getElementById('oyKpiRevenueSub').textContent = `${start} ~ ${end}`;
+  document.getElementById('oyKpiSpend').textContent = fmtEok(totalSpend);
+  document.getElementById('oyKpiSpendSub').textContent = `${start} ~ ${end}`;
+  const roas = totalSpend ? totalRevenue/totalSpend*100 : 0;
+  document.getElementById('oyKpiRoas').textContent = fmtPct(roas);
+  document.getElementById('oyKpiRoasSub').textContent = totalSpend ? `매출이 광고비의 ${(roas/100).toLocaleString('ko-KR',{maximumFractionDigits:1})}배` : '-';
+
+  const unclassified = DATA.oliveyoung.ad_unclassified_label;
+  const rows = Array.from(byProduct.entries())
+    .filter(([name])=> name !== unclassified && name !== '미매핑 (분류 안 됨)')
+    .sort((a,b)=>b[1].revenue-a[1].revenue);
+  const trailing = [unclassified, '미매핑 (분류 안 됨)']
+    .map(name=>[name, byProduct.get(name)])
+    .filter(([,p])=>p);
+
+  const table = document.getElementById('oyProductTable');
+  const thead = '<thead><tr><th>제품</th><th>광고비</th><th>매출</th><th>ROAS</th><th>CPM</th><th>CTR</th><th>CVR</th></tr></thead>';
+  function rowHtml([name, p]){
+    const roasByRevenue = p.spend ? p.revenue/p.spend*100 : null;
+    const cpm = p.impr ? p.spend/p.impr*1000 : null;
+    const ctr = p.impr ? p.clicks/p.impr*100 : null;
+    const cvr = p.clicks ? p.conv/p.clicks*100 : null;
+    const fmt1 = v => v==null ? '-' : v.toLocaleString('ko-KR',{maximumFractionDigits:1})+'%';
+    return `<tr><td>${name}</td><td>${fmtWon(p.spend)}</td><td>${fmtWon(p.revenue)}</td><td>${fmt1(roasByRevenue)}</td><td>${p.impr? fmtWon(Math.round(cpm)) : '-'}</td><td>${fmt1(ctr)}</td><td>${fmt1(cvr)}</td></tr>`;
+  }
+  let tbody = '<tbody>' + rows.map(rowHtml).join('') + trailing.map(rowHtml).join('') + '</tbody>';
+  table.innerHTML = thead + tbody;
+}
+renderOliveYoungTab();
+
 /* ---------------- 이번 달 목표 대비 실적 (월별 목표, 항상 '해당 월' 기준 — 상단 기간 필터와 무관) ---------------- */
 function renderCafe24Targets(){
   const t = DATA.cafe24.targets;
@@ -2305,6 +2594,7 @@ renderCafe24Targets();
   const btns = document.querySelectorAll('#tabSwitch .tabswitch-btn');
   const mainPanel = document.getElementById('mainDashboardPanel');
   const c24Panel = document.getElementById('cafe24Panel');
+  const oyPanel = document.getElementById('oliveYoungPanel');
   btns.forEach(btn=>{
     btn.addEventListener('click', ()=>{
       btns.forEach(b=>b.classList.remove('active'));
@@ -2312,6 +2602,7 @@ renderCafe24Targets();
       const tab = btn.dataset.tab;
       mainPanel.hidden = tab !== 'main';
       c24Panel.hidden = tab !== 'cafe24';
+      oyPanel.hidden = tab !== 'oliveyoung';
     });
   });
 })();

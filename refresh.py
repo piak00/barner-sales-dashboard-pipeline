@@ -357,8 +357,8 @@ def build_ads(rows: list[list[str]]):
     return {"ads": ads, "ads_by_channel": ads_by_channel}
 
 
-def build_cafe24_products(ad_rows: list[list[str]], revenue_rows: list[list[str]]):
-    """자사몰(CAFE24) 탭: 일자·제품별 광고비/노출/클릭/전환/전환값 + 매출.
+def build_channel_products(ad_rows: list[list[str]], revenue_rows: list[list[str]], sales_channel: str):
+    """채널별(CAFE24/OLIVE_YOUNG 등) 탭: 일자·제품별 광고비/노출/클릭/전환/전환값 + 매출.
 
     광고 쪽 제품 태그는 바르너_광고소재 탭 R열(사용자가 직접 입력)을 그대로 쓴다.
     매출 쪽은 매출_RAW_CLEAN의 단일 제품명을 그대로 쓴다.
@@ -371,7 +371,7 @@ def build_cafe24_products(ad_rows: list[list[str]], revenue_rows: list[list[str]
     }))
     for row in ad_data:
         date, ch, campaign, adset, ad = row[0], row[1], row[2], row[3], row[4]
-        if map_ad_to_sales_channel(ch, campaign) != 'CAFE24':
+        if map_ad_to_sales_channel(ch, campaign) != sales_channel:
             continue
         product = product_from_row(row)
         d = ad_daily[date][product]
@@ -396,7 +396,7 @@ def build_cafe24_products(ad_rows: list[list[str]], revenue_rows: list[list[str]
     rev_daily = defaultdict(lambda: defaultdict(float))
     for row in rev_data:
         date, ch = row[1], row[2]
-        if ch != 'CAFE24':
+        if ch != sales_channel:
             continue
         product = row[10].strip() or '미매핑 (분류 안 됨)'
         rev_daily[date][product] += parse_won(row[15])
@@ -407,11 +407,9 @@ def build_cafe24_products(ad_rows: list[list[str]], revenue_rows: list[list[str]
             rev_daily_rows.append({"date": date, "product": product, "revenue": round(amt)})
 
     return {
-        "cafe24": {
-            "ad_daily": ad_daily_rows,
-            "revenue_daily": rev_daily_rows,
-            "ad_unclassified_label": AD_UNCLASSIFIED,
-        }
+        "ad_daily": ad_daily_rows,
+        "revenue_daily": rev_daily_rows,
+        "ad_unclassified_label": AD_UNCLASSIFIED,
     }
 
 
@@ -573,22 +571,28 @@ def build_targets(rows: list[list[str]], cafe24_revenue_daily: list[dict], bundl
 
 WINNER_MIN_SPEND = 300000  # 이 금액(원) 미만 광고비를 쓴 소재는 위너 후보에서 제외 (노이즈 방지)
 WINNER_TOP_N = 20
-# 자사몰(CAFE24) 위너 소재는 이 3개 매체만 본다 (사용자 확정 범위)
-WINNER_CHANNELS = ('FACEBOOK', 'GOOGLE_ADS', 'TIKTOK')
+# 채널별로 위너 소재 후보로 볼 매체 범위 (사용자 확정 범위) — 매핑 규칙상
+# GOOGLE_ADS/TIKTOK은 전량 CAFE24로만 가고, 올리브영은 FACEBOOK 소재만 매핑된다
+WINNER_CHANNELS_BY_SALES_CHANNEL = {
+    'CAFE24': ('FACEBOOK', 'GOOGLE_ADS', 'TIKTOK'),
+    'OLIVE_YOUNG': ('FACEBOOK',),
+}
 
 
-def build_creative_winners(ad_rows: list[list[str]]):
-    """자사몰(CAFE24) 탭: 위너 소재 — 대시보드 상단의 기간 필터를 그대로 따라가도록,
+def build_creative_winners(ad_rows: list[list[str]], sales_channel: str):
+    """채널별(CAFE24/OLIVE_YOUNG) 탭: 위너 소재 — 대시보드 상단의 기간 필터를 그대로 따라가도록,
     서버에서 월별로 미리 순위를 매기지 않고 일자·소재 단위 원본을 그대로 내려보낸다
     (클라이언트가 현재 선택된 기간에 맞춰 그때그때 합산·정렬한다).
 
-    FACEBOOK/GOOGLE_ADS/TIKTOK 중 자사몰(CAFE24)로 매핑되는 소재만 대상으로 하고,
-    전체 기간 광고비 합계가 WINNER_MIN_SPEND 미만인 소재는 애초에 위너가 될 수 없으므로
-    제외해 용량을 줄인다(짧은 기간에 몰아써서 반짝 상위에 오르는 극단적 케이스는 배제됨).
+    WINNER_CHANNELS_BY_SALES_CHANNEL에 정의된 매체 중 해당 판매채널로 매핑되는 소재만
+    대상으로 하고, 전체 기간 광고비 합계가 WINNER_MIN_SPEND 미만인 소재는 애초에 위너가
+    될 수 없으므로 제외해 용량을 줄인다(짧은 기간에 몰아써서 반짝 상위에 오르는 극단적
+    케이스는 배제됨).
     """
+    winner_channels = WINNER_CHANNELS_BY_SALES_CHANNEL[sales_channel]
     header, *data = ad_rows
     data = [r for r in data if len(r) > 10 and r[0].strip()]
-    data = [r for r in data if r[1] in WINNER_CHANNELS and map_ad_to_sales_channel(r[1], r[2]) == 'CAFE24']
+    data = [r for r in data if r[1] in winner_channels and map_ad_to_sales_channel(r[1], r[2]) == sales_channel]
 
     lifetime_spend: dict[tuple, float] = {}
     for row in data:
@@ -629,7 +633,7 @@ def build_creative_winners(ad_rows: list[list[str]]):
         "creative_winners": {
             "min_spend": WINNER_MIN_SPEND,
             "top_n": WINNER_TOP_N,
-            "channels": ["ALL"] + list(WINNER_CHANNELS),
+            "channels": ["ALL"] + list(winner_channels),
             "creatives": creatives_list,
             "daily": daily_rows,
         }
@@ -653,12 +657,15 @@ def main():
     agg.update(build_quantity(qty_rows))
     agg.update(build_product_master(master_rows))
     agg.update(build_ads(ads_rows))
-    agg.update(build_cafe24_products(ads_rows, revenue_rows))
-    agg["cafe24"]["creative_winners"] = build_creative_winners(ads_rows)["creative_winners"]
+    agg["cafe24"] = build_channel_products(ads_rows, revenue_rows, "CAFE24")
+    agg["cafe24"]["creative_winners"] = build_creative_winners(ads_rows, "CAFE24")["creative_winners"]
     agg["cafe24"]["targets"] = build_targets(
         target_rows, agg["cafe24"]["revenue_daily"], build_bundle_revenue(revenue_rows),
         agg["meta"]["revenue_date_range"][1]
     )["targets"]
+
+    agg["oliveyoung"] = build_channel_products(ads_rows, revenue_rows, "OLIVE_YOUNG")
+    agg["oliveyoung"]["creative_winners"] = build_creative_winners(ads_rows, "OLIVE_YOUNG")["creative_winners"]
 
     # 광고비(판매채널 매핑) vs 실제 매출 비교 — CAFE24/스마트스토어/올리브영만 판매채널로 확정 매핑됨
     ad_spend_by_ch = agg["ads_by_channel"]["channel_totals"]

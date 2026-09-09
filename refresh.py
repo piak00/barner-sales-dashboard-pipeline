@@ -435,6 +435,9 @@ TARGET_LABEL_TO_PRODUCT = {
 # 단일 제품이 아니라 여러 제품이 섞인 묶음성 목표라 실적을 제품별로 추적할 수 없는 항목
 # (실제 매출은 각 제품 실적 안에 이미 섞여있으므로 0%로 표시하면 오해의 소지가 있어 별도 처리)
 TARGET_UNTRACKABLE_LABELS = {'프로모션 매출', '공구', '기타 (외부 공구)'}
+# 원본 시트에서 하위 제품(블랙 치약/핑크 치약/액상 치약)의 합계를 나타내는 상위 롤업 행이라
+# 표에 같이 노출하면 중복 집계로 보이므로 제외
+TARGET_EXCLUDED_LABELS = {'신규브랜드-자사몰'}
 
 
 def build_targets(rows: list[list[str]], cafe24_revenue_daily: list[dict], latest_date: str):
@@ -464,6 +467,8 @@ def build_targets(rows: list[list[str]], cafe24_revenue_daily: list[dict], lates
         label = r[1].strip() if len(r) > 1 else ''
         if not label:
             break
+        if label in TARGET_EXCLUDED_LABELS:
+            continue
         monthly = {m: (parse_won(r[col]) if col < len(r) else 0.0) for col, m in month_cols}
         product_targets.append({"label": label, "monthly": monthly})
 

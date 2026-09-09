@@ -587,6 +587,33 @@
   </div><!-- /mainDashboardPanel -->
 
   <div id="cafe24Panel" hidden>
+    <section class="card" style="margin-bottom:20px;">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title">이번 달 목표 대비 실적</h2>
+          <p class="card-desc" id="c24TargetDesc">-</p>
+        </div>
+      </div>
+      <div class="kpis" style="grid-template-columns:repeat(3,1fr); margin-bottom:16px;">
+        <div class="kpi">
+          <span class="label" id="c24TargetMonthLabel">목표 매출</span>
+          <span class="value" id="c24TargetRevenue">-</span>
+          <span class="sub" id="c24TargetActualSub">-</span>
+        </div>
+        <div class="kpi">
+          <span class="label">월 경과율</span>
+          <span class="value" id="c24MonthProgress">-</span>
+          <span class="sub" id="c24MonthProgressSub">-</span>
+        </div>
+        <div class="kpi">
+          <span class="label">목표매출 달성율</span>
+          <span class="value" id="c24Achievement">-</span>
+          <span class="sub" id="c24AchievementSub">-</span>
+        </div>
+      </div>
+      <div class="tbl-scroll"><table id="c24TargetTable"></table></div>
+    </section>
+
     <div class="kpis" style="grid-template-columns:repeat(3,1fr);">
       <div class="kpi">
         <span class="label">자사몰 매출</span>
@@ -2236,6 +2263,42 @@ function renderCafe24Tab(){
   table.innerHTML = thead + tbody;
 }
 renderCafe24Tab();
+
+/* ---------------- 이번 달 목표 대비 실적 (월별 목표, 항상 '해당 월' 기준 — 상단 기간 필터와 무관) ---------------- */
+function renderCafe24Targets(){
+  const t = DATA.cafe24.targets;
+  document.getElementById('c24TargetDesc').textContent =
+    `${t.month_label} (${t.as_of_date} 기준) · '자사몰 월별 목표 매출' 원본 탭의 '바르너-자사몰' 행 기준.`;
+  document.getElementById('c24TargetMonthLabel').textContent = `${t.month_label} 목표 매출`;
+  document.getElementById('c24TargetRevenue').textContent = fmtEok(t.target_revenue);
+  document.getElementById('c24TargetActualSub').textContent = `실제 매출 ${fmtEok(t.actual_revenue)}`;
+  document.getElementById('c24MonthProgress').textContent = fmtPct(t.month_progress_pct);
+  document.getElementById('c24MonthProgressSub').textContent = `${t.days_elapsed}/${t.days_in_month}일 경과`;
+  const achEl = document.getElementById('c24Achievement');
+  const achSubEl = document.getElementById('c24AchievementSub');
+  if(t.achievement_pct == null){
+    achEl.textContent = '-';
+    achSubEl.textContent = '-';
+  } else {
+    achEl.textContent = fmtPct(t.achievement_pct);
+    const onPace = t.achievement_pct >= t.month_progress_pct;
+    achSubEl.innerHTML = `<span class="delta-badge ${onPace?'up':'down'}">${onPace?'페이스 이상':'페이스 미달'}</span>`;
+  }
+
+  const table = document.getElementById('c24TargetTable');
+  const thead = '<thead><tr><th>제품</th><th>목표 매출</th><th>실제 매출</th><th>달성율</th></tr></thead>';
+  const rows = t.products.filter(p => p.target > 0 || p.untrackable);
+  function rowHtml(p){
+    if(p.untrackable){
+      return `<tr><td>${escapeHtml(p.label)}</td><td>${fmtWon(p.target)}</td><td>-</td><td><span title="여러 제품이 섞인 묶음성 목표라 제품별 실적 추적 불가">추적 불가</span></td></tr>`;
+    }
+    const badge = p.achievement_pct == null ? '-' :
+      `<span class="delta-badge ${p.achievement_pct>=t.month_progress_pct?'up':'down'}">${fmtPct(p.achievement_pct)}</span>`;
+    return `<tr><td>${escapeHtml(p.label)}</td><td>${fmtWon(p.target)}</td><td>${fmtWon(p.actual)}</td><td>${badge}</td></tr>`;
+  }
+  table.innerHTML = thead + '<tbody>' + rows.map(rowHtml).join('') + '</tbody>';
+}
+renderCafe24Targets();
 
 /* ---------------- 탭 전환 ---------------- */
 (function wireTabSwitch(){

@@ -10,6 +10,7 @@ template.html의 __SALES_DATA_JSON__ 자리에 채워 최종 대시보드 HTML�
     -> 이 디렉터리에 dashboard_output.html 생성
     -> 이후 Artifact publish 도구로 기존 URL에 재배포하면 됨
 """
+import calendar
 import csv
 import json
 import subprocess
@@ -23,6 +24,7 @@ GIDS = {
     "quantity": "26090318",      # 제품수량_RAW_CLEAN
     "product_master": "26090301",  # 표준제품_MASTER
     "ads": "748935331",          # 바르너_광고소재
+    "targets": "360330701",      # 자사몰 월별 목표 매출
 }
 TEMPLATE_PATH = HERE / "template.html"
 OUTPUT_PATH = HERE / "dashboard_output.html"
@@ -413,6 +415,109 @@ def build_cafe24_products(ad_rows: list[list[str]], revenue_rows: list[list[str]
     }
 
 
+# '자사몰 월별 목표 매출' 탭의 제품 라벨을 대시보드 표준 제품명으로 매핑 (신규/미출시 제품, 프로모션·공구 등
+# 묶음성 항목은 실적 데이터가 제품 단위로 없어 매핑하지 않고 실적 0으로 처리한다)
+TARGET_LABEL_TO_PRODUCT = {
+    '미니스팟': 'EMS 미니스팟',
+    '아치스본': '아치스본',
+    '아치스본 프로': '아치스본 프로',
+    '아치스본 슬리퍼': '아치스본 슬리퍼',
+    '아치스본 스포츠': '아치스본 스포츠',
+    '아치스본 밸런스': '아치스본 밸런스',
+    '괄사세럼': '바디괄사 세럼',
+    '스텝퍼': '지압 스텝퍼',
+    '시너지패치': 'EMS 시너지 패치',
+    '풋파우더': '클리어풋 제로 파우더',
+    '바르너EMS버닝벨트': 'EMS 버닝벨트',
+    '바르너EMS슬리퍼': '아치스본 EMS 슬리퍼',
+    '바르너버닝벨트': '버닝벨트',
+}
+# 단일 제품이 아니라 여러 제품이 섞인 묶음성 목표라 실적을 제품별로 추적할 수 없는 항목
+# (실제 매출은 각 제품 실적 안에 이미 섞여있으므로 0%로 표시하면 오해의 소지가 있어 별도 처리)
+TARGET_UNTRACKABLE_LABELS = {'프로모션 매출', '공구', '기타 (외부 공구)'}
+
+
+def build_targets(rows: list[list[str]], cafe24_revenue_daily: list[dict], latest_date: str):
+    """자사몰(CAFE24) 탭 상단 목표 대비 실적.
+
+    '자사몰 월별 목표 매출' 원본 탭(사용자가 직접 관리)에서 '바르너-자사몰' 행의 월별 총 목표와
+    그 아래(37행부터) 제품별 월별 목표를 읽어, 실제 매출(카페24 채널)과 비교한다.
+    '해당 월'은 시스템 날짜가 아니라 실제 매출 데이터가 존재하는 마지막 날짜(latest_date)의 달로
+    정해서, 새로고침 시점과 무관하게 데이터가 실제로 커버하는 달과 항상 일치시킨다.
+    """
+    total_row_idx = next(i for i, r in enumerate(rows) if len(r) > 1 and r[1].strip() == '바르너-자사몰')
+    month_header_row = rows[total_row_idx - 1]
+    month_cols = []  # [(컬럼 인덱스, 월 번호), ...]
+    for col in range(2, 14):
+        label = month_header_row[col].strip() if col < len(month_header_row) else ''
+        num = ''.join(ch for ch in label.split('(')[0] if ch.isdigit())
+        if num:
+            month_cols.append((col, int(num)))
+
+    target_by_month = {}
+    total_row = rows[total_row_idx]
+    for col, m in month_cols:
+        target_by_month[m] = parse_won(total_row[col]) if col < len(total_row) else 0.0
+
+    product_targets = []
+    for r in rows[total_row_idx + 1:]:
+        label = r[1].strip() if len(r) > 1 else ''
+        if not label:
+            break
+        monthly = {m: (parse_won(r[col]) if col < len(r) else 0.0) for col, m in month_cols}
+        product_targets.append({"label": label, "monthly": monthly})
+
+    year_s, month_s, day_s = latest_date.split('-')
+    year, month, day = int(year_s), int(month_s), int(day_s)
+    days_in_month = calendar.monthrange(year, month)[1]
+
+    actual_by_product = defaultdict(float)
+    actual_total = 0.0
+    ym_prefix = f"{year}-{month:02d}"
+    for r in cafe24_revenue_daily:
+        if r["date"][:7] != ym_prefix:
+            continue
+        actual_by_product[r["product"]] += r["revenue"]
+        actual_total += r["revenue"]
+
+    target_this_month = target_by_month.get(month, 0.0)
+    products = []
+    for pt in product_targets:
+        target_amt = pt["monthly"].get(month, 0.0)
+        untrackable = pt["label"] in TARGET_UNTRACKABLE_LABELS
+        if untrackable:
+            products.append({
+                "label": pt["label"], "product": None, "target": round(target_amt),
+                "actual": None, "achievement_pct": None, "untrackable": True,
+            })
+            continue
+        mapped = TARGET_LABEL_TO_PRODUCT.get(pt["label"])
+        actual_amt = actual_by_product.get(mapped, 0.0) if mapped else 0.0
+        products.append({
+            "label": pt["label"],
+            "product": mapped,
+            "target": round(target_amt),
+            "actual": round(actual_amt),
+            "achievement_pct": round(actual_amt / target_amt * 100, 1) if target_amt else None,
+            "untrackable": False,
+        })
+
+    return {
+        "targets": {
+            "month": f"{year}-{month:02d}",
+            "month_label": f"{month}월",
+            "as_of_date": latest_date,
+            "days_elapsed": day,
+            "days_in_month": days_in_month,
+            "month_progress_pct": round(day / days_in_month * 100, 1),
+            "target_revenue": round(target_this_month),
+            "actual_revenue": round(actual_total),
+            "achievement_pct": round(actual_total / target_this_month * 100, 1) if target_this_month else None,
+            "products": products,
+        }
+    }
+
+
 WINNER_MIN_SPEND = 300000  # 이 금액(원) 미만 광고비를 쓴 소재는 위너 후보에서 제외 (노이즈 방지)
 WINNER_TOP_N = 20
 # 자사몰(CAFE24) 위너 소재는 이 3개 매체만 본다 (사용자 확정 범위)
@@ -487,6 +592,8 @@ def main():
     master_rows = fetch_csv(GIDS["product_master"])
     print("fetching 바르너_광고소재 ...")
     ads_rows = fetch_csv(GIDS["ads"])
+    print("fetching 자사몰 월별 목표 매출 ...")
+    target_rows = fetch_csv(GIDS["targets"])
 
     agg = {}
     agg.update(build_revenue(revenue_rows))
@@ -495,6 +602,9 @@ def main():
     agg.update(build_ads(ads_rows))
     agg.update(build_cafe24_products(ads_rows, revenue_rows))
     agg["cafe24"]["creative_winners"] = build_creative_winners(ads_rows)["creative_winners"]
+    agg["cafe24"]["targets"] = build_targets(
+        target_rows, agg["cafe24"]["revenue_daily"], agg["meta"]["revenue_date_range"][1]
+    )["targets"]
 
     # 광고비(판매채널 매핑) vs 실제 매출 비교 — CAFE24/스마트스토어/올리브영만 판매채널로 확정 매핑됨
     ad_spend_by_ch = agg["ads_by_channel"]["channel_totals"]

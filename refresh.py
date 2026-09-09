@@ -119,7 +119,7 @@ def parse_pct_or_num(s: str) -> float:
 
 def build_revenue(rows: list[list[str]]):
     header, *data = rows
-    data = [r for r in data if len(r) > 14 and r[1].strip() and r[2].strip()]
+    data = [r for r in data if len(r) > 15 and r[1].strip() and r[2].strip()]
 
     daily = defaultdict(lambda: defaultdict(float))
     dates = set()
@@ -127,7 +127,7 @@ def build_revenue(rows: list[list[str]]):
         date, ch = row[1], CH_MAP_RAW.get(row[2], row[2])
         if ch not in CHANNEL_ORDER:
             continue
-        daily[date][ch] += parse_won(row[14])
+        daily[date][ch] += parse_won(row[15])
         dates.add(date)
     dates = sorted(dates)
 
@@ -160,7 +160,7 @@ def build_revenue(rows: list[list[str]]):
     for row in data:
         prod = row[10].strip()
         key = prod if prod else "__UNMAPPED__"
-        prod_rev[key] += parse_won(row[14])
+        prod_rev[key] += parse_won(row[15])
     sorted_prods = sorted(prod_rev.items(), key=lambda x: -x[1])
     top = [(p, v) for p, v in sorted_prods if p != "__UNMAPPED__"][:TOP_N_PRODUCTS]
     top_names = [p for p, _ in top]
@@ -184,7 +184,7 @@ def build_revenue(rows: list[list[str]]):
             key = prod
         else:
             key = "기타 제품 (12종)"
-        monthly_prod[ym][key] += parse_won(row[14])
+        monthly_prod[ym][key] += parse_won(row[15])
     keys = top_names + ["기타 제품 (12종)", "미매핑 (분류 안 됨)"]
     monthly_product_revenue = []
     for ym in sorted(monthly_prod.keys()):
@@ -391,7 +391,7 @@ def build_cafe24_products(ad_rows: list[list[str]], revenue_rows: list[list[str]
             })
 
     rev_header, *rev_data = revenue_rows
-    rev_data = [r for r in rev_data if len(r) > 14 and r[1].strip() and r[2].strip()]
+    rev_data = [r for r in rev_data if len(r) > 15 and r[1].strip() and r[2].strip()]
 
     rev_daily = defaultdict(lambda: defaultdict(float))
     for row in rev_data:
@@ -399,7 +399,7 @@ def build_cafe24_products(ad_rows: list[list[str]], revenue_rows: list[list[str]
         if ch != 'CAFE24':
             continue
         product = row[10].strip() or '미매핑 (분류 안 됨)'
-        rev_daily[date][product] += parse_won(row[14])
+        rev_daily[date][product] += parse_won(row[15])
 
     rev_daily_rows = []
     for date, by_product in rev_daily.items():

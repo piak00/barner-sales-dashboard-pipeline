@@ -435,11 +435,14 @@ TARGET_LABEL_TO_PRODUCT = {
 # 단일 제품이 아니라 여러 제품이 섞인 묶음성 목표라 제품 단위로는 실적을 추적할 수 없지만,
 # 매출_RAW_CLEAN의 '매출구분' 컬럼(프로모션/공구)으로 CAFE24 채널 내 실적은 집계 가능한 항목
 BUNDLE_LABEL_TO_SALES_TYPE = {'프로모션 매출': '프로모션', '공구': '공구'}
-# 위 매출구분 값으로도 잡을 수 없는(자사몰 채널 밖 외부 공구) 진짜 추적 불가 항목
-TARGET_UNTRACKABLE_LABELS = {'기타 (외부 공구)'}
-# 신규브랜드-자사몰(오덴틱 치약 라인)과 그 하위 제품 — 바르너가 아닌 별도 신규 브랜드라
-# 바르너 제품 목표 대비 실적 표에는 노출하지 않는다
-TARGET_EXCLUDED_LABELS = {'신규브랜드-자사몰', '블랙 치약', '핑크 치약', '액상 치약'}
+# 신규브랜드-자사몰(오덴틱 치약 라인)과 그 하위 제품(바르너가 아닌 별도 신규 브랜드),
+# 그리고 자사몰 채널 밖이라 실적을 아예 집계할 수 없는 '기타 (외부 공구)'는 표에서 제외
+TARGET_EXCLUDED_LABELS = {'신규브랜드-자사몰', '블랙 치약', '핑크 치약', '액상 치약', '기타 (외부 공구)'}
+# 이 라벨들만 표에서 단독 행으로 남기고, 나머지 제품은 모두 '기타'로 합산
+TARGET_KEEP_SEPARATE_LABELS = {
+    '미니스팟', '아치스본 슬리퍼', '아치스본 스포츠', '아치스본 밸런스',
+    '괄사세럼', '스텝퍼', '풋파우더', '프로모션 매출',
+}
 
 
 def build_bundle_revenue(revenue_rows: list[list[str]]):
@@ -517,14 +520,10 @@ def build_targets(rows: list[list[str]], cafe24_revenue_daily: list[dict], bundl
 
     target_this_month = target_by_month.get(month, 0.0)
     products = []
+    other_target = 0.0
+    other_actual = 0.0
     for pt in product_targets:
         target_amt = pt["monthly"].get(month, 0.0)
-        if pt["label"] in TARGET_UNTRACKABLE_LABELS:
-            products.append({
-                "label": pt["label"], "product": None, "target": round(target_amt),
-                "actual": None, "achievement_pct": None, "untrackable": True,
-            })
-            continue
         sales_type = BUNDLE_LABEL_TO_SALES_TYPE.get(pt["label"])
         if sales_type:
             mapped = None
@@ -532,12 +531,27 @@ def build_targets(rows: list[list[str]], cafe24_revenue_daily: list[dict], bundl
         else:
             mapped = TARGET_LABEL_TO_PRODUCT.get(pt["label"])
             actual_amt = actual_by_product.get(mapped, 0.0) if mapped else 0.0
+
+        if pt["label"] not in TARGET_KEEP_SEPARATE_LABELS:
+            other_target += target_amt
+            other_actual += actual_amt
+            continue
+
         products.append({
             "label": pt["label"],
             "product": mapped,
             "target": round(target_amt),
             "actual": round(actual_amt),
             "achievement_pct": round(actual_amt / target_amt * 100, 1) if target_amt else None,
+            "untrackable": False,
+        })
+    if other_target or other_actual:
+        products.append({
+            "label": "기타",
+            "product": None,
+            "target": round(other_target),
+            "actual": round(other_actual),
+            "achievement_pct": round(other_actual / other_target * 100, 1) if other_target else None,
             "untrackable": False,
         })
 

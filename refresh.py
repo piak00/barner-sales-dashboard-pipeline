@@ -432,15 +432,36 @@ TARGET_LABEL_TO_PRODUCT = {
     '바르너EMS슬리퍼': '아치스본 EMS 슬리퍼',
     '바르너버닝벨트': '버닝벨트',
 }
-# 단일 제품이 아니라 여러 제품이 섞인 묶음성 목표라 실적을 제품별로 추적할 수 없는 항목
-# (실제 매출은 각 제품 실적 안에 이미 섞여있으므로 0%로 표시하면 오해의 소지가 있어 별도 처리)
-TARGET_UNTRACKABLE_LABELS = {'프로모션 매출', '공구', '기타 (외부 공구)'}
+# 단일 제품이 아니라 여러 제품이 섞인 묶음성 목표라 제품 단위로는 실적을 추적할 수 없지만,
+# 매출_RAW_CLEAN의 '매출구분' 컬럼(프로모션/공구)으로 CAFE24 채널 내 실적은 집계 가능한 항목
+BUNDLE_LABEL_TO_SALES_TYPE = {'프로모션 매출': '프로모션', '공구': '공구'}
+# 위 매출구분 값으로도 잡을 수 없는(자사몰 채널 밖 외부 공구) 진짜 추적 불가 항목
+TARGET_UNTRACKABLE_LABELS = {'기타 (외부 공구)'}
 # 원본 시트에서 하위 제품(블랙 치약/핑크 치약/액상 치약)의 합계를 나타내는 상위 롤업 행이라
 # 표에 같이 노출하면 중복 집계로 보이므로 제외
 TARGET_EXCLUDED_LABELS = {'신규브랜드-자사몰'}
 
 
-def build_targets(rows: list[list[str]], cafe24_revenue_daily: list[dict], latest_date: str):
+def build_bundle_revenue(revenue_rows: list[list[str]]):
+    """CAFE24 채널의 '매출구분'이 프로모션/공구인 거래를 일자별로 집계.
+
+    '자사몰 월별 목표 매출' 탭의 '프로모션 매출'/'공구' 항목은 여러 제품이 섞인 묶음이라
+    단일 제품명(row[10])으로는 추적이 안 되지만, 매출구분(row[12]) 값으로는 정확히 집계할 수 있다.
+    """
+    header, *data = revenue_rows
+    data = [r for r in data if len(r) > 15 and r[1].strip() and r[2].strip()]
+    daily = defaultdict(lambda: defaultdict(float))
+    for row in data:
+        if row[2].strip() != 'CAFE24':
+            continue
+        sales_type = row[12].strip()
+        if sales_type not in BUNDLE_LABEL_TO_SALES_TYPE.values():
+            continue
+        daily[row[1]][sales_type] += parse_won(row[15])
+    return [{"date": d, **{k: round(v) for k, v in types.items()}} for d, types in daily.items()]
+
+
+def build_targets(rows: list[list[str]], cafe24_revenue_daily: list[dict], bundle_daily: list[dict], latest_date: str):
     """자사몰(CAFE24) 탭 상단 목표 대비 실적.
 
     '자사몰 월별 목표 매출' 원본 탭(사용자가 직접 관리)에서 '바르너-자사몰' 행의 월별 총 목표와
@@ -485,19 +506,32 @@ def build_targets(rows: list[list[str]], cafe24_revenue_daily: list[dict], lates
         actual_by_product[r["product"]] += r["revenue"]
         actual_total += r["revenue"]
 
+    actual_by_sales_type = defaultdict(float)
+    for r in bundle_daily:
+        if r["date"][:7] != ym_prefix:
+            continue
+        for k, v in r.items():
+            if k == "date":
+                continue
+            actual_by_sales_type[k] += v
+
     target_this_month = target_by_month.get(month, 0.0)
     products = []
     for pt in product_targets:
         target_amt = pt["monthly"].get(month, 0.0)
-        untrackable = pt["label"] in TARGET_UNTRACKABLE_LABELS
-        if untrackable:
+        if pt["label"] in TARGET_UNTRACKABLE_LABELS:
             products.append({
                 "label": pt["label"], "product": None, "target": round(target_amt),
                 "actual": None, "achievement_pct": None, "untrackable": True,
             })
             continue
-        mapped = TARGET_LABEL_TO_PRODUCT.get(pt["label"])
-        actual_amt = actual_by_product.get(mapped, 0.0) if mapped else 0.0
+        sales_type = BUNDLE_LABEL_TO_SALES_TYPE.get(pt["label"])
+        if sales_type:
+            mapped = None
+            actual_amt = actual_by_sales_type.get(sales_type, 0.0)
+        else:
+            mapped = TARGET_LABEL_TO_PRODUCT.get(pt["label"])
+            actual_amt = actual_by_product.get(mapped, 0.0) if mapped else 0.0
         products.append({
             "label": pt["label"],
             "product": mapped,
@@ -608,7 +642,8 @@ def main():
     agg.update(build_cafe24_products(ads_rows, revenue_rows))
     agg["cafe24"]["creative_winners"] = build_creative_winners(ads_rows)["creative_winners"]
     agg["cafe24"]["targets"] = build_targets(
-        target_rows, agg["cafe24"]["revenue_daily"], agg["meta"]["revenue_date_range"][1]
+        target_rows, agg["cafe24"]["revenue_daily"], build_bundle_revenue(revenue_rows),
+        agg["meta"]["revenue_date_range"][1]
     )["targets"]
 
     # 광고비(판매채널 매핑) vs 실제 매출 비교 — CAFE24/스마트스토어/올리브영만 판매채널로 확정 매핑됨

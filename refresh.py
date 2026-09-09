@@ -437,9 +437,9 @@ TARGET_LABEL_TO_PRODUCT = {
 BUNDLE_LABEL_TO_SALES_TYPE = {'프로모션 매출': '프로모션', '공구': '공구'}
 # 위 매출구분 값으로도 잡을 수 없는(자사몰 채널 밖 외부 공구) 진짜 추적 불가 항목
 TARGET_UNTRACKABLE_LABELS = {'기타 (외부 공구)'}
-# 원본 시트에서 하위 제품(블랙 치약/핑크 치약/액상 치약)의 합계를 나타내는 상위 롤업 행이라
-# 표에 같이 노출하면 중복 집계로 보이므로 제외
-TARGET_EXCLUDED_LABELS = {'신규브랜드-자사몰'}
+# 신규브랜드-자사몰(오덴틱 치약 라인)과 그 하위 제품 — 바르너가 아닌 별도 신규 브랜드라
+# 바르너 제품 목표 대비 실적 표에는 노출하지 않는다
+TARGET_EXCLUDED_LABELS = {'신규브랜드-자사몰', '블랙 치약', '핑크 치약', '액상 치약'}
 
 
 def build_bundle_revenue(revenue_rows: list[list[str]]):

@@ -1,0 +1,871 @@
+<title>오덴틱 매출 대시보드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@500;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    color-scheme: light;
+    --page:#f9f9f7;
+    --surface:#fcfcfb;
+    --surface-raised:#ffffff;
+    --text-primary:#0b0b0b;
+    --text-secondary:#52514e;
+    --text-muted:#898781;
+    --grid:#e1e0d9;
+    --axis:#c3c2b7;
+    --border:rgba(11,11,11,0.10);
+    --accent:#2a78d6;
+    --accent-soft:rgba(42,120,214,0.09);
+    --good:#006300;
+    --critical:#d03b3b;
+    --critical-soft:rgba(208,59,59,0.10);
+    --c-self:#2a78d6;
+    --c-coupang:#eb6834;
+    --c-black:#24211d;
+    --c-pink:#e87ba4;
+    --c-meta:#2a78d6;
+    --c-naver-sa:#1baf7a;
+    --c-naver-gfa:#eda100;
+    --ch-0:#2a78d6; --ch-1:#eb6834; --ch-2:#1baf7a; --ch-3:#eda100;
+    --ch-4:#e87ba4; --ch-5:#008300; --ch-6:#4a3aa7; --ch-7:#e34948;
+    --font-display:'Gothic A1', system-ui, -apple-system, "Malgun Gothic", sans-serif;
+    --font-body:'IBM Plex Sans KR', system-ui, -apple-system, "Malgun Gothic", sans-serif;
+    --font-mono:'IBM Plex Mono', ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --page:#0d0d0d;
+      --surface:#1a1a19;
+      --surface-raised:#211f1e;
+      --text-primary:#ffffff;
+      --text-secondary:#c3c2b7;
+      --text-muted:#92918a;
+      --grid:#2c2c2a;
+      --axis:#3d3d3a;
+      --border:rgba(255,255,255,0.10);
+      --accent:#3987e5;
+      --accent-soft:rgba(57,135,229,0.14);
+      --good:#0ca30c;
+      --critical:#e66767;
+      --critical-soft:rgba(230,103,103,0.14);
+      --c-self:#3987e5;
+      --c-coupang:#d95926;
+      --c-black:#e7e5df;
+      --c-pink:#d55181;
+      --c-meta:#3987e5;
+      --c-naver-sa:#199e70;
+      --c-naver-gfa:#c98500;
+      --ch-0:#3987e5; --ch-1:#d95926; --ch-2:#199e70; --ch-3:#c98500;
+      --ch-4:#d55181; --ch-5:#008300; --ch-6:#9085e9; --ch-7:#e66767;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page:#0d0d0d;
+    --surface:#1a1a19;
+    --surface-raised:#211f1e;
+    --text-primary:#ffffff;
+    --text-secondary:#c3c2b7;
+    --text-muted:#92918a;
+    --grid:#2c2c2a;
+    --axis:#3d3d3a;
+    --border:rgba(255,255,255,0.10);
+    --accent:#3987e5;
+    --accent-soft:rgba(57,135,229,0.14);
+    --good:#0ca30c;
+    --critical:#e66767;
+    --critical-soft:rgba(230,103,103,0.14);
+    --c-self:#3987e5;
+    --c-coupang:#d95926;
+    --c-black:#e7e5df;
+    --c-pink:#d55181;
+    --c-meta:#3987e5;
+    --c-naver-sa:#199e70;
+    --c-naver-gfa:#c98500;
+    --ch-0:#3987e5; --ch-1:#d95926; --ch-2:#199e70; --ch-3:#c98500;
+    --ch-4:#d55181; --ch-5:#008300; --ch-6:#9085e9; --ch-7:#e66767;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--page); color:var(--text-primary);
+    font-family:var(--font-body); -webkit-font-smoothing:antialiased;
+    font-variant-numeric: tabular-nums;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:36px 24px 64px;}
+
+  header.top{
+    display:flex; flex-wrap:wrap; gap:16px 32px;
+    align-items:flex-end; justify-content:space-between;
+    padding-bottom:20px; margin-bottom:22px;
+    border-bottom:1px solid var(--border);
+  }
+  .eyebrow{
+    font-family:var(--font-mono); font-size:12px; letter-spacing:.08em;
+    color:var(--accent); text-transform:uppercase; margin:0 0 8px; font-weight:600;
+  }
+  h1{
+    font-family:var(--font-display); font-weight:800;
+    font-size:clamp(24px,3.2vw,32px); line-height:1.15; margin:0; text-wrap:balance;
+  }
+  .top-meta{display:flex; flex-direction:column; gap:6px; align-items:flex-end; font-size:13px; color:var(--text-secondary); text-align:right;}
+  .top-meta .range{font-family:var(--font-mono); color:var(--text-primary); font-weight:600;}
+  .badge{
+    display:inline-flex; align-items:center; gap:6px; font-size:11.5px; color:var(--text-secondary);
+    background:var(--surface-raised); border:1px solid var(--border); padding:4px 10px; border-radius:100px;
+  }
+  .badge .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
+
+  .filterbar{
+    display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px;
+    background:var(--surface-raised); border:1px solid var(--border); border-radius:12px;
+    padding:12px 16px; margin-bottom:18px;
+  }
+  .filter-group{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .filter-label{font-size:12px; color:var(--text-muted); font-weight:600;}
+  .filter-sep{color:var(--text-muted); font-size:12px;}
+  .date-input, .filterbar select{
+    font-family:var(--font-mono); font-size:12.5px; color:var(--text-primary);
+    background:var(--page); border:1px solid var(--border); border-radius:8px;
+    padding:5px 8px; cursor:pointer;
+  }
+  .date-input:focus-visible, .filterbar select:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+  .filter-note{font-size:11.5px; color:var(--text-muted); margin-left:auto;}
+
+  .tabswitch{ display:flex; gap:6px; margin-bottom:22px; border-bottom:1px solid var(--border); }
+  .tabswitch-btn{
+    font-family:var(--font-display); font-weight:700; font-size:13.5px;
+    color:var(--text-muted); background:transparent; border:0;
+    padding:10px 4px 12px; margin-right:20px; cursor:pointer;
+    border-bottom:2px solid transparent; margin-bottom:-1px;
+  }
+  .tabswitch-btn.active{ color:var(--accent); border-bottom-color:var(--accent); }
+  .tabswitch-btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px;}
+  @media (max-width:860px){ .kpis{grid-template-columns:repeat(2,1fr);} }
+  .kpi{
+    background:var(--surface-raised); border:1px solid var(--border);
+    border-radius:14px; padding:18px 18px 16px; display:flex; flex-direction:column; gap:8px;
+  }
+  .kpi .label{font-size:12.5px; color:var(--text-secondary);}
+  .kpi .value{font-family:var(--font-display); font-weight:800; font-size:25px; letter-spacing:-.01em;}
+  .kpi .sub{font-size:12px; color:var(--text-muted); font-family:var(--font-mono);}
+  .chip{
+    display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:700;
+    padding:2px 8px; border-radius:100px; font-family:var(--font-mono); margin-left:6px;
+  }
+  .chip.critical{background:var(--critical-soft); color:var(--critical);}
+
+  section.card{
+    background:var(--surface-raised); border:1px solid var(--border);
+    border-radius:16px; padding:22px 24px 20px; margin-bottom:18px;
+  }
+  .card-head{display:flex; flex-wrap:wrap; gap:10px 20px; align-items:flex-start; justify-content:space-between; margin-bottom:6px;}
+  .card-title{font-family:var(--font-display); font-weight:700; font-size:16px; margin:0;}
+  .card-desc{font-size:12.5px; color:var(--text-secondary); margin:4px 0 0; max-width:64ch;}
+  .row-2{display:grid; grid-template-columns:1.3fr 1fr; gap:18px;}
+  @media (max-width:900px){ .row-2{grid-template-columns:1fr;} }
+
+  .seg{
+    display:inline-flex; background:var(--page); border:1px solid var(--border);
+    border-radius:9px; padding:3px; gap:2px; flex:none;
+  }
+  .seg button{
+    border:0; background:transparent; font-family:var(--font-body);
+    font-size:12.5px; font-weight:600; color:var(--text-secondary);
+    padding:6px 12px; border-radius:6px; cursor:pointer;
+  }
+  .seg button.active{background:var(--surface-raised); color:var(--accent); box-shadow:0 1px 2px var(--border);}
+  .seg button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
+
+  .legend{display:flex; flex-wrap:wrap; gap:12px 18px; margin:10px 2px 2px;}
+  .legend .item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-secondary);}
+  .legend .swatch{width:10px; height:10px; border-radius:3px; flex:none;}
+  .legend .swatch-line{width:14px; height:2px; border-radius:2px;}
+
+  .chart-shell{position:relative;}
+  svg.chart{width:100%; height:auto; display:block; overflow:visible;}
+  .gridline{stroke:var(--grid); stroke-width:1;}
+  .axis-text{fill:var(--text-muted); font-size:10.5px; font-family:var(--font-mono);}
+  .axis-line{stroke:var(--axis); stroke-width:1;}
+  .hit{fill:transparent; cursor:pointer;}
+  .bar{transition:opacity .1s;}
+  .bar:hover{opacity:.82;}
+
+  .tooltip{
+    position:fixed; pointer-events:none; z-index:50;
+    background:var(--surface-raised); border:1px solid var(--border);
+    border-radius:10px; padding:9px 12px; font-size:12px; box-shadow:0 6px 20px rgba(0,0,0,.14);
+    opacity:0; transform:translate(-50%,-110%); transition:opacity .08s; min-width:150px;
+  }
+  .tooltip.show{opacity:1;}
+  .tooltip .t-date{font-family:var(--font-mono); color:var(--text-muted); font-size:11px; margin-bottom:5px;}
+  .tooltip .t-row{display:flex; align-items:center; gap:14px; justify-content:space-between; margin:2px 0; color:var(--text-secondary);}
+  .tooltip .t-row b{font-family:var(--font-mono); font-weight:600; color:var(--text-primary);}
+
+  .rank-list{display:flex; flex-direction:column; gap:11px; margin-top:8px;}
+  .rank-row{display:grid; grid-template-columns:minmax(84px,150px) 1fr auto; align-items:center; gap:10px;}
+  .rank-row .rname{font-size:12.5px; color:var(--text-secondary); font-weight:600;}
+  .rank-track{position:relative; height:14px; background:var(--grid); border-radius:5px; overflow:hidden;}
+  .rank-fill{position:absolute; inset:0; width:0; border-radius:5px; transition:width .5s ease;}
+  .rank-vals{display:flex; justify-content:flex-end; align-items:baseline; gap:6px; font-family:var(--font-mono); white-space:nowrap;}
+  .rank-vals .amt{font-size:12.5px; font-weight:600;}
+  .rank-vals .pct{font-size:11px; color:var(--text-muted);}
+
+  .tbl-scroll{overflow-x:auto; margin-top:10px; border:1px solid var(--border); border-radius:10px;}
+  table{border-collapse:collapse; width:100%; font-size:12px; font-family:var(--font-mono);}
+  th,td{padding:8px 12px; text-align:right; white-space:nowrap; border-bottom:1px solid var(--border);}
+  th:first-child,td:first-child{text-align:left; font-family:var(--font-body);}
+  th.txt-left,td.txt-left{text-align:left; font-family:var(--font-body);}
+  thead th{color:var(--text-muted); font-weight:600; font-size:11px; background:var(--page);}
+  tbody tr:last-child td{border-bottom:0;}
+
+  footer.notes{
+    margin-top:8px; padding-top:18px; border-top:1px solid var(--border);
+    font-size:12px; color:var(--text-muted); line-height:1.7;
+  }
+  footer.notes b{color:var(--text-secondary);}
+  footer.notes ul{margin:6px 0 0; padding-left:18px;}
+
+  @media (prefers-reduced-motion: reduce){ .rank-fill{transition:none;} }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Odentic · Sales &amp; Ads Dashboard</p>
+      <h1>오덴틱 매출 · 광고 대시보드</h1>
+    </div>
+    <div class="top-meta">
+      <span class="range" id="metaRange">-</span>
+      <span class="badge"><span class="dot"></span>자사몰(CAFE24) + 외부 판매채널 통합 매출 · Meta/Naver 등 광고</span>
+    </div>
+  </header>
+
+  <div class="filterbar">
+    <div class="filter-group">
+      <span class="filter-label">기간</span>
+      <select id="rangePreset">
+        <option value="all">전체 기간</option>
+        <option value="7d">최근 7일</option>
+        <option value="3d">최근 3일</option>
+        <option value="custom">사용자 지정</option>
+      </select>
+      <input type="date" id="rangeStart" class="date-input">
+      <span class="filter-sep">~</span>
+      <input type="date" id="rangeEnd" class="date-input">
+    </div>
+    <span class="filter-note" id="filterNote"></span>
+  </div>
+
+  <div class="tabswitch" id="tabSwitch">
+    <button class="tabswitch-btn active" data-tab="main">전체 대시보드</button>
+    <button class="tabswitch-btn" data-tab="ads">광고 성과</button>
+  </div>
+
+  <div id="mainPanel">
+    <div class="kpis" id="mainKpis"></div>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title">일별 매출 · 광고비</h2>
+          <p class="card-desc">자사몰+쿠팡 합산 매출과 총 광고비. 매일 광고비가 매출을 크게 웃돌고 있어요.</p>
+        </div>
+      </div>
+      <div class="legend">
+        <div class="item"><span class="swatch" style="background:var(--accent)"></span>매출</div>
+        <div class="item"><span class="swatch" style="background:var(--text-muted)"></span>광고비</div>
+      </div>
+      <div class="chart-shell">
+        <svg class="chart" id="chartRevSpend" viewBox="0 0 940 260"></svg>
+        <div class="tooltip" id="tipRevSpend"></div>
+      </div>
+    </section>
+
+    <div class="row-2">
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2 class="card-title">일별 ROAS 추이</h2>
+            <p class="card-desc" id="roasCardDesc">점선은 손익분기 ROAS(원가15%+배송비7.5%+수수료3.2% 회수 지점)</p>
+          </div>
+        </div>
+        <div class="chart-shell">
+          <svg class="chart" id="chartRoas" viewBox="0 0 600 220"></svg>
+          <div class="tooltip" id="tipRoas"></div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-head"><div><h2 class="card-title">판매처별 매출 비중</h2><p class="card-desc" id="channelRankDesc">선택 기간 누적</p></div></div>
+        <div class="rank-list" id="channelRankList"></div>
+      </section>
+    </div>
+
+    <div class="row-2">
+      <section class="card">
+        <div class="card-head">
+          <div><h2 class="card-title">일별 공헌이익</h2><p class="card-desc" id="marginDesc">매출 − (광고비+원가+배송비+수수료)</p></div>
+        </div>
+        <div class="chart-shell">
+          <svg class="chart" id="chartMargin" viewBox="0 0 600 200"></svg>
+          <div class="tooltip" id="tipMargin"></div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-head"><div><h2 class="card-title">제품별 매출 비중</h2><p class="card-desc">자사몰(CAFE24) 기준, 선택 기간 누적</p></div></div>
+        <div class="rank-list" id="productRankList"></div>
+      </section>
+    </div>
+  </div>
+
+  <div id="adsPanel" hidden>
+    <div class="kpis" id="adKpis"></div>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title">광고비 · 전환값 추이</h2>
+          <p class="card-desc">Meta(Facebook)·Naver(SA/GFA) 합산 일별 광고비와 매체 픽셀 기준 전환값(추정 구매가치)</p>
+        </div>
+      </div>
+      <div class="chart-shell">
+        <svg class="chart" id="chartAdTrend" viewBox="0 0 940 260"></svg>
+        <div class="tooltip" id="tipAdTrend"></div>
+      </div>
+      <div class="legend">
+        <div class="item"><span class="swatch-line" style="background:var(--good)"></span>전환값</div>
+        <div class="item"><span class="swatch-line" style="background:var(--text-muted)"></span>광고비</div>
+      </div>
+    </section>
+
+    <div class="row-2">
+      <section class="card">
+        <div class="card-head"><div><h2 class="card-title">ROAS 추이</h2><p class="card-desc">일별 전환값 ÷ 광고비.</p></div></div>
+        <div class="chart-shell">
+          <svg class="chart" id="chartAdRoas" viewBox="0 0 470 200"></svg>
+          <div class="tooltip" id="tipAdRoas"></div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-head"><div><h2 class="card-title">CPM 추이</h2><p class="card-desc">노출 1,000회당 광고비.</p></div></div>
+        <div class="chart-shell">
+          <svg class="chart" id="chartAdCpm" viewBox="0 0 470 200"></svg>
+          <div class="tooltip" id="tipAdCpm"></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="row-2">
+      <section class="card">
+        <div class="card-head"><div><h2 class="card-title">CTR 추이</h2><p class="card-desc">노출 대비 클릭률.</p></div></div>
+        <div class="chart-shell">
+          <svg class="chart" id="chartAdCtr" viewBox="0 0 470 200"></svg>
+          <div class="tooltip" id="tipAdCtr"></div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-head"><div><h2 class="card-title">CPC 추이</h2><p class="card-desc">클릭 1회당 광고비.</p></div></div>
+        <div class="chart-shell">
+          <svg class="chart" id="chartAdCpc" viewBox="0 0 470 200"></svg>
+          <div class="tooltip" id="tipAdCpc"></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="row-2">
+      <section class="card">
+        <div class="card-head"><div><h2 class="card-title">매체별 광고비 비중</h2><p class="card-desc" id="adRankDesc">선택 기간 누적</p></div></div>
+        <div class="rank-list" id="adRankList"></div>
+      </section>
+      <section class="card">
+        <div class="card-head"><div><h2 class="card-title">매체별 성과 지표</h2><p class="card-desc">선택 기간 누적 기준</p></div></div>
+        <div class="tbl-scroll"><table id="adChannelTable"></table></div>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title">소재별 성과</h2>
+          <p class="card-desc" id="creativeDesc">전환값 상위순. 전환값÷광고비를 소재 ROAS로 표시(매체 픽셀 추적 기준, 대시보드 매출과 100% 일치하지 않을 수 있음)</p>
+        </div>
+        <div class="seg" id="creativeChannelSeg">
+          <button data-ch="FACEBOOK" class="active">Meta</button>
+          <button data-ch="GOOGLE">Google</button>
+          <button data-ch="TIKTOK">TikTok</button>
+        </div>
+      </div>
+      <div class="tbl-scroll"><table id="creativeTable"></table></div>
+    </section>
+  </div>
+
+  <footer class="notes">
+    <b>데이터 안내</b>
+    <ul>
+      <li>매출은 매출_RAW_CLEAN 탭의 거래건별 원본을 일자·채널·제품별로 집계했으며, <b>결제금액(-vat)</b>(부가세 제외) 기준입니다. 판매처별·제품별 비중은 매출이 실제로 발생한 항목만 자동으로 표에 나타납니다.</li>
+      <li>공헌이익은 매출 − (광고비 + 원가율 15% + 배송비율 7.5% + 수수료율 3.2%) 가정으로 근사 계산한 값입니다(채널별 세부 수수료율 차이는 반영하지 않음). 손익분기 ROAS는 <b id="breakevenNote">-</b>입니다.</li>
+      <li>광고 KPI·추이·매체별 비중은 오덴틱_광고소재 탭의 매체·캠페인·일자별 원본을 집계했습니다. 소재별 성과는 같은 원본을 매체·소재명 기준으로 전체 기간 누적 집계한 것으로, 상단의 기간 필터가 적용되지 않습니다. 전환값은 매체 픽셀이 추적한 구매 전환 가치로 실제 매출과 100% 일치하지 않을 수 있습니다.</li>
+      <li>매체 구분은 시트 원본의 광고채널 값을 그대로 쓰며, Google·TikTok 등 신규 매체가 로그에 추가되면 라벨·색상·표가 코드 수정 없이 자동으로 확장됩니다.</li>
+      <li>이 페이지는 <code>refresh.py</code>가 시트를 새로고침할 때마다 재생성됩니다 — 데이터를 최신화하려면 원본 시트를 갱신한 뒤 파이프라인을 다시 실행하면 됩니다.</li>
+    </ul>
+  </footer>
+</div>
+
+<script>
+(function(){
+  const RAW = __ODENTIC_DATA_JSON__;
+  const REV = RAW.revenue;
+  const ADS = RAW.ads;
+  const MARGIN_BY_DATE = new Map(RAW.margin_daily.map(d => [d.date, d]));
+  const BREAKEVEN_ROAS = RAW.breakeven_roas;
+  const MIN_DATE = REV.meta.revenue_date_range[0];
+  const MAX_DATE = REV.meta.revenue_date_range[1];
+  const CHANNELS = REV.channels;       // 자사몰이 항상 0번, 나머지는 누적매출 내림차순 — refresh.py가 정한 순서
+  const PRODUCTS = REV.products;       // 누적매출 내림차순
+  const CHANNEL_KOR = {CAFE24:'자사몰(CAFE24)', SMART_STORE:'네이버 스마트스토어', COUPANG:'쿠팡', COUPANG_ZET:'쿠팡(제트배송)', KAKAO_GIFT:'카카오 선물하기', TALKSTORE:'카카오 톡스토어', OLIVE_YOUNG:'올리브영', ZIGZAG:'지그재그'};
+  function channelKor(c){ return CHANNEL_KOR[c] || c; }
+
+  const SALES_DAILY = REV.daily_series.map(r=>{
+    const m = MARGIN_BY_DATE.get(r.date) || {};
+    return {
+      date: r.date, revenue: r.total,
+      spend: m.spend||0, margin: m.margin||0, roas: (m.roas==null? null : m.roas),
+      channels: Object.fromEntries(CHANNELS.map(c=>[c, r[c]||0])),
+      products: Object.fromEntries(PRODUCTS.map(p=>[p, r['product__'+p]||0])),
+    };
+  });
+
+  const fmtWon = n => '₩' + Math.round(n).toLocaleString('ko-KR');
+  const fmtWonSigned = n => (n<0?'-':'') + '₩' + Math.abs(Math.round(n)).toLocaleString('ko-KR');
+  const fmtNum = n => Math.round(n).toLocaleString('ko-KR');
+  const fmtPct1 = n => n.toFixed(1)+'%';
+  const clampDate = d => d < MIN_DATE ? MIN_DATE : (d > MAX_DATE ? MAX_DATE : d);
+
+  document.getElementById('roasCardDesc').textContent = `점선은 손익분기 ROAS ${BREAKEVEN_ROAS}%(원가15%+배송비7.5%+수수료3.2% 회수 지점)`;
+  document.getElementById('breakevenNote').textContent = BREAKEVEN_ROAS+'%';
+  document.getElementById('filterNote').textContent = `데이터 보유 기간: ${MIN_DATE} ~ ${MAX_DATE}`;
+
+  // ---------- ad channel label/color (필터로 매체 구성이 바뀌어도 동일 매체는 항상 같은 색) ----------
+  const AD_CHANNEL_NAME = {FACEBOOK:'Meta(Facebook)', NAVER_SA:'Naver 검색광고', NAVER_GFA:'Naver GFA', GOOGLE_ADS:'Google Ads', TIKTOK:'TikTok', KAKAOMOMENT:'Kakao Moment', COUPANG_AD:'쿠팡 광고'};
+  function channelLabel(ch){ return AD_CHANNEL_NAME[ch] || ch; }
+  const channelColorMap = new Map();
+  function channelColor(ch){
+    if(!channelColorMap.has(ch)) channelColorMap.set(ch, `var(--ch-${channelColorMap.size % 8})`);
+    return channelColorMap.get(ch);
+  }
+  (function seed(){
+    [...ADS.ad_channels].sort((a,b)=>(ADS.ad_channel_totals[b]||0)-(ADS.ad_channel_totals[a]||0)).forEach(channelColor);
+  })();
+  // 판매채널(자사몰/쿠팡 등) 색상도 같은 팔레트에서, 매출 내림차순으로 고정 배정
+  const salesChannelColorMap = new Map();
+  function salesChannelColor(ch){
+    if(!salesChannelColorMap.has(ch)) salesChannelColorMap.set(ch, `var(--ch-${salesChannelColorMap.size % 8})`);
+    return salesChannelColorMap.get(ch);
+  }
+  CHANNELS.forEach(salesChannelColor);
+  const productColorMap = new Map();
+  function productColor(p){
+    if(!productColorMap.has(p)) productColorMap.set(p, `var(--ch-${(productColorMap.size+2) % 8})`);
+    return productColorMap.get(p);
+  }
+  PRODUCTS.forEach(productColor);
+
+  // ---------- filter state ----------
+  const presetSel = document.getElementById('rangePreset');
+  const startInput = document.getElementById('rangeStart');
+  const endInput = document.getElementById('rangeEnd');
+  startInput.min = endInput.min = MIN_DATE;
+  startInput.max = endInput.max = MAX_DATE;
+  let range = {start: MIN_DATE, end: MAX_DATE};
+
+  function addDays(dateStr, n){
+    const d = new Date(dateStr+'T00:00:00Z');
+    d.setUTCDate(d.getUTCDate()+n);
+    return d.toISOString().slice(0,10);
+  }
+  function applyPreset(v){
+    if(v==='all'){ range = {start: MIN_DATE, end: MAX_DATE}; }
+    else if(v==='7d'){ range = {start: clampDate(addDays(MAX_DATE,-6)), end: MAX_DATE}; }
+    else if(v==='3d'){ range = {start: clampDate(addDays(MAX_DATE,-2)), end: MAX_DATE}; }
+    startInput.value = range.start; endInput.value = range.end;
+    render();
+  }
+  presetSel.addEventListener('change', e=>{
+    if(e.target.value==='custom'){ return; }
+    applyPreset(e.target.value);
+  });
+  [startInput,endInput].forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      let s = clampDate(startInput.value || MIN_DATE);
+      let e = clampDate(endInput.value || MAX_DATE);
+      if(s>e){ [s,e]=[e,s]; }
+      startInput.value=s; endInput.value=e;
+      range = {start:s, end:e};
+      presetSel.value = 'custom';
+      render();
+    });
+  });
+
+  // ---------- creative channel selector ----------
+  let creativeChannel = (ADS.creative_channels && ADS.creative_channels[0]) || 'FACEBOOK';
+  document.getElementById('creativeChannelSeg').innerHTML = (ADS.creative_channels||[]).map((ch,i)=>
+    `<button data-ch="${ch}" class="${i===0?'active':''}">${ADS.creative_channel_label[ch]||ch}</button>`
+  ).join('');
+  document.getElementById('creativeChannelSeg').addEventListener('click', e=>{
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    document.querySelectorAll('#creativeChannelSeg button').forEach(b=>b.classList.toggle('active', b===btn));
+    creativeChannel = btn.dataset.ch;
+    render();
+  });
+
+  // ---------- tabs ----------
+  const mainPanel = document.getElementById('mainPanel');
+  const adsPanel = document.getElementById('adsPanel');
+  document.getElementById('tabSwitch').addEventListener('click', e=>{
+    const btn = e.target.closest('.tabswitch-btn');
+    if(!btn) return;
+    document.querySelectorAll('.tabswitch-btn').forEach(b=>b.classList.toggle('active', b===btn));
+    const tab = btn.dataset.tab;
+    mainPanel.hidden = tab!=='main';
+    adsPanel.hidden = tab!=='ads';
+  });
+
+  function bindTip(el, tipEl){
+    return html=>{
+      el.addEventListener('mousemove', e=>{
+        tipEl.innerHTML = html(e);
+        tipEl.style.left = e.clientX+'px';
+        tipEl.style.top = e.clientY+'px';
+        tipEl.classList.add('show');
+      });
+      el.addEventListener('mouseleave', ()=>tipEl.classList.remove('show'));
+    };
+  }
+
+  // ---------- rank list ----------
+  function renderRankList(container, items){
+    const total = items.reduce((s,i)=>s+i.value,0) || 1;
+    const max = Math.max(...items.map(i=>i.value), 1);
+    container.innerHTML = items.map(it=>`
+      <div class="rank-row">
+        <span class="rname">${it.label}</span>
+        <div class="rank-track"><div class="rank-fill" style="width:${(it.value/max*100).toFixed(1)}%;background:${it.color}"></div></div>
+        <div class="rank-vals"><span class="amt">${it.fmt? it.fmt(it.value): fmtWon(it.value)}</span><span class="pct">${(it.value/total*100).toFixed(1)}%</span></div>
+      </div>`).join('');
+  }
+
+  // ---------- grouped bar chart (2 series, ₩) ----------
+  function drawGroupedBar(svg, tip, data, k1, k2, c1, c2){
+    const W=940,H=260, padL=58, padR=12, padT=10, padB=28;
+    const innerW=W-padL-padR, innerH=H-padT-padB;
+    const maxV = Math.max(1, ...data.map(d=>Math.max(d[k1],d[k2]))) * 1.08;
+    const n = data.length;
+    const groupW = innerW/n, barW = groupW*0.30;
+    const y = v => padT + innerH - (v/maxV)*innerH;
+    let s='';
+    for(let i=0;i<=4;i++){
+      const v = maxV/4*i, yy = y(v);
+      s += `<line class="gridline" x1="${padL}" x2="${W-padR}" y1="${yy}" y2="${yy}"/>`;
+      s += `<text class="axis-text" x="${padL-8}" y="${yy+3}" text-anchor="end">${v>=10000?Math.round(v/10000)+'만':Math.round(v)}</text>`;
+    }
+    s += `<line class="axis-line" x1="${padL}" x2="${W-padR}" y1="${padT+innerH}" y2="${padT+innerH}"/>`;
+    data.forEach((d,i)=>{
+      const gx=padL+groupW*i, cx=gx+groupW/2;
+      const rx=cx-barW-2, sx=cx+2;
+      const ry=y(d[k1]), sy=y(d[k2]);
+      s += `<rect class="bar" x="${rx}" y="${ry}" width="${barW}" height="${padT+innerH-ry}" rx="3" fill="${c1}"/>`;
+      s += `<rect class="bar" x="${sx}" y="${sy}" width="${barW}" height="${padT+innerH-sy}" rx="3" fill="${c2}"/>`;
+      s += `<rect class="hit" x="${gx+1}" y="${padT}" width="${groupW-2}" height="${innerH}" data-i="${i}"/>`;
+      s += `<text class="axis-text" x="${cx}" y="${H-8}" text-anchor="middle">${d.date.slice(5)}</text>`;
+    });
+    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    svg.innerHTML = s;
+    svg.querySelectorAll('.hit').forEach(el=>{
+      bindTip(el, tip)(e=>{
+        const d = data[+el.dataset.i];
+        return `<div class="t-date">${d.date}</div>
+          <div class="t-row"><span>매출</span><b>${fmtWon(d[k1])}</b></div>
+          <div class="t-row"><span>광고비</span><b>${fmtWon(d[k2])}</b></div>
+          <div class="t-row"><span>ROAS</span><b>${d.roas!=null? d.roas+'%':'—'}</b></div>`;
+      });
+    });
+  }
+
+  // ---------- line chart w/ breakeven ----------
+  function drawRoasLine(svg, tip, data){
+    const W=600,H=220, padL=48, padR=14, padT=14, padB=28;
+    const innerW=W-padL-padR, innerH=H-padT-padB;
+    const vals = data.map(d=>d.roas).filter(v=>v!=null);
+    const maxV = Math.max(BREAKEVEN_ROAS, ...vals, 1) * 1.12;
+    const n = data.length;
+    const x = i => n<=1? padL : padL + innerW*(i/(n-1));
+    const y = v => padT + innerH - (v/maxV)*innerH;
+    let s='';
+    for(let i=0;i<=4;i++){
+      const v=maxV/4*i, yy=y(v);
+      s += `<line class="gridline" x1="${padL}" x2="${W-padR}" y1="${yy}" y2="${yy}"/>`;
+      s += `<text class="axis-text" x="${padL-8}" y="${yy+3}" text-anchor="end">${Math.round(v)}%</text>`;
+    }
+    const yBE = y(BREAKEVEN_ROAS);
+    s += `<rect x="${padL}" y="${yBE}" width="${innerW}" height="${padT+innerH-yBE}" fill="var(--critical-soft)"/>`;
+    s += `<line x1="${padL}" x2="${W-padR}" y1="${yBE}" y2="${yBE}" stroke="var(--critical)" stroke-width="1.5" stroke-dasharray="4 4"/>`;
+    s += `<text class="axis-text" x="${W-padR}" y="${yBE-6}" text-anchor="end" fill="var(--critical)">손익분기 ${BREAKEVEN_ROAS}%</text>`;
+    s += `<line class="axis-line" x1="${padL}" x2="${W-padR}" y1="${padT+innerH}" y2="${padT+innerH}"/>`;
+    let path='';
+    data.forEach((d,i)=>{ if(d.roas!=null){ const p=`${x(i)},${y(d.roas)}`; path += (path===''?'M':'L')+p+' '; } });
+    s += `<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+    data.forEach((d,i)=>{
+      const cx=x(i);
+      s += `<text class="axis-text" x="${cx}" y="${H-8}" text-anchor="middle">${d.date.slice(5)}</text>`;
+      if(d.roas==null) return;
+      const cy=y(d.roas);
+      s += `<circle cx="${cx}" cy="${cy}" r="4" fill="var(--surface-raised)" stroke="var(--accent)" stroke-width="2.5"/>`;
+      s += `<circle class="hit" cx="${cx}" cy="${cy}" r="12" data-i="${i}"/>`;
+    });
+    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    svg.innerHTML = s;
+    svg.querySelectorAll('.hit').forEach(el=>{
+      bindTip(el, tip)(()=>{
+        const d = data[+el.dataset.i];
+        return `<div class="t-date">${d.date}</div>
+          <div class="t-row"><span>ROAS</span><b>${d.roas}%</b></div>
+          <div class="t-row"><span>손익분기 대비</span><b>${Math.round(d.roas/BREAKEVEN_ROAS*100)}%</b></div>`;
+      });
+    });
+  }
+
+  // ---------- negative-only bar chart ----------
+  function drawMarginBar(svg, tip, data){
+    const W=600,H=200, padL=62, padR=12, padT=14, padB=28;
+    const innerW=W-padL-padR, innerH=H-padT-padB;
+    const maxAbs = Math.max(1, ...data.map(d=>Math.abs(d.margin))) * 1.1;
+    const n = data.length;
+    const groupW = innerW/n, barW = groupW*0.5;
+    const yZero = padT;
+    const y = v => yZero + (Math.abs(v)/maxAbs)*innerH;
+    let s='';
+    for(let i=1;i<=3;i++){
+      const v=maxAbs/3*i, yy=y(-v);
+      s += `<line class="gridline" x1="${padL}" x2="${W-padR}" y1="${yy}" y2="${yy}"/>`;
+      s += `<text class="axis-text" x="${padL-8}" y="${yy+3}" text-anchor="end">-${v>=10000?Math.round(v/10000)+'만':Math.round(v)}</text>`;
+    }
+    s += `<line class="axis-line" x1="${padL}" x2="${W-padR}" y1="${yZero}" y2="${yZero}"/>`;
+    s += `<text class="axis-text" x="${padL-8}" y="${yZero+3}" text-anchor="end">0</text>`;
+    data.forEach((d,i)=>{
+      const gx=padL+groupW*i, cx=gx+groupW/2;
+      const bh = y(d.margin)-yZero;
+      const positive = d.margin>0;
+      s += `<rect class="bar" x="${cx-barW/2}" y="${positive? yZero-bh : yZero}" width="${barW}" height="${Math.abs(bh)}" rx="3" fill="${positive?'var(--good)':'var(--critical)'}"/>`;
+      s += `<rect class="hit" x="${gx+1}" y="${padT}" width="${groupW-2}" height="${innerH}" data-i="${i}"/>`;
+      s += `<text class="axis-text" x="${cx}" y="${H-8}" text-anchor="middle">${d.date.slice(5)}</text>`;
+    });
+    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    svg.innerHTML = s;
+    svg.querySelectorAll('.hit').forEach(el=>{
+      bindTip(el, tip)(()=>{
+        const d = data[+el.dataset.i];
+        return `<div class="t-date">${d.date}</div>
+          <div class="t-row"><span>공헌이익</span><b style="color:${d.margin>0?'var(--good)':'var(--critical)'}">${fmtWonSigned(d.margin)}</b></div>`;
+      });
+    });
+  }
+
+  // ---------- dual line chart (no area) — 광고비 vs 전환값 ----------
+  function drawDualLine(svg, tip, data, k1, k2, c1, c2, l1, l2){
+    const W=940,H=260, padL=58, padR=12, padT=10, padB=28;
+    const innerW=W-padL-padR, innerH=H-padT-padB;
+    const maxV = Math.max(1, ...data.map(d=>Math.max(d[k1],d[k2]))) * 1.08;
+    const n = data.length;
+    const x = i => n<=1? padL : padL + innerW*(i/(n-1));
+    const y = v => padT + innerH - (v/maxV)*innerH;
+    let s='';
+    for(let i=0;i<=4;i++){
+      const v=maxV/4*i, yy=y(v);
+      s += `<line class="gridline" x1="${padL}" x2="${W-padR}" y1="${yy}" y2="${yy}"/>`;
+      s += `<text class="axis-text" x="${padL-8}" y="${yy+3}" text-anchor="end">${v>=10000?Math.round(v/10000)+'만':Math.round(v)}</text>`;
+    }
+    s += `<line class="axis-line" x1="${padL}" x2="${W-padR}" y1="${padT+innerH}" y2="${padT+innerH}"/>`;
+    [[k2,c2],[k1,c1]].forEach(([k,c])=>{
+      let path='';
+      data.forEach((d,i)=>{ path += (path===''?'M':'L')+`${x(i)},${y(d[k])} `; });
+      s += `<path d="${path}" fill="none" stroke="${c}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+      const li = data.length-1;
+      s += `<circle cx="${x(li)}" cy="${y(data[li][k])}" r="4" fill="var(--surface-raised)" stroke="${c}" stroke-width="2.5"/>`;
+    });
+    data.forEach((d,i)=>{
+      const cx=x(i);
+      s += `<text class="axis-text" x="${cx}" y="${H-8}" text-anchor="middle">${d.date.slice(5)}</text>`;
+      s += `<rect class="hit" x="${cx-(innerW/Math.max(n-1,1))/2}" y="${padT}" width="${innerW/Math.max(n-1,1)}" height="${innerH}" data-i="${i}"/>`;
+    });
+    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    svg.innerHTML = s;
+    svg.querySelectorAll('.hit').forEach(el=>{
+      bindTip(el, tip)(()=>{
+        const d = data[+el.dataset.i];
+        const roas = d[k1]? (d[k2]/d[k1]*100).toFixed(1)+'%' : '—';
+        return `<div class="t-date">${d.date}</div>
+          <div class="t-row"><span>${l2}</span><b>${fmtWon(d[k2])}</b></div>
+          <div class="t-row"><span>${l1}</span><b>${fmtWon(d[k1])}</b></div>
+          <div class="t-row"><span>ROAS</span><b>${roas}</b></div>`;
+      });
+    });
+  }
+
+  // ---------- single-metric area line chart (ROAS/CPM/CTR/CPC 등) ----------
+  function drawMetricLine(svg, tip, data, key, color, label, fmtFn){
+    const W=470,H=200, padL=54, padR=14, padT=14, padB=28;
+    const innerW=W-padL-padR, innerH=H-padT-padB;
+    const vals = data.map(d=>d[key]).filter(v=>v!=null);
+    const maxV = Math.max(...vals, 1) * 1.15;
+    const n = data.length;
+    const x = i => n<=1? padL : padL + innerW*(i/(n-1));
+    const y = v => padT + innerH - (v/maxV)*innerH;
+    const baseY = padT+innerH;
+    let s='';
+    for(let i=0;i<=3;i++){
+      const v=maxV/3*i, yy=y(v);
+      s += `<line class="gridline" x1="${padL}" x2="${W-padR}" y1="${yy}" y2="${yy}"/>`;
+      s += `<text class="axis-text" x="${padL-8}" y="${yy+3}" text-anchor="end">${fmtFn(v)}</text>`;
+    }
+    s += `<line class="axis-line" x1="${padL}" x2="${W-padR}" y1="${baseY}" y2="${baseY}"/>`;
+    let path='', area='';
+    data.forEach((d,i)=>{
+      if(d[key]==null) return;
+      const p = `${x(i)},${y(d[key])}`;
+      path += (path===''?'M':'L')+p+' ';
+    });
+    area = path ? `${path}L${x(n-1)},${baseY} L${x(0)},${baseY} Z` : '';
+    if(area) s += `<path d="${area}" fill="${color}" opacity="0.14" stroke="none"/>`;
+    s += `<path d="${path}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+    data.forEach((d,i)=>{
+      const cx=x(i);
+      s += `<text class="axis-text" x="${cx}" y="${H-8}" text-anchor="middle">${d.date.slice(5)}</text>`;
+      if(d[key]==null) return;
+      const cy=y(d[key]);
+      if(i===n-1){ s += `<circle cx="${cx}" cy="${cy}" r="4" fill="var(--surface-raised)" stroke="${color}" stroke-width="2.5"/>`; }
+      s += `<circle class="hit" cx="${cx}" cy="${cy}" r="12" data-i="${i}"/>`;
+    });
+    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    svg.innerHTML = s;
+    svg.querySelectorAll('.hit').forEach(el=>{
+      bindTip(el, tip)(()=>{
+        const d = data[+el.dataset.i];
+        return `<div class="t-date">${d.date}</div>
+          <div class="t-row"><span>${label}</span><b>${fmtFn(d[key])}</b></div>`;
+      });
+    });
+  }
+
+  // ---------- aggregation ----------
+  function aggregate(rows, keyFn){
+    const map = new Map();
+    rows.forEach(r=>{
+      const key = keyFn(r);
+      if(!map.has(key)) map.set(key, {spend:0,impr:0,clk:0,conv:0,convval:0});
+      const a = map.get(key);
+      a.spend+=r.spend; a.impr+=r.impr; a.clk+=r.clk; a.conv+=r.conv; a.convval+=r.convval;
+    });
+    return map;
+  }
+
+
+  function render(){
+    document.getElementById('metaRange').textContent = `${range.start} → ${range.end}`;
+
+    const salesF = SALES_DAILY.filter(d=> d.date>=range.start && d.date<=range.end);
+
+    const totRevenue = salesF.reduce((s,d)=>s+d.revenue,0);
+    const totSpend = salesF.reduce((s,d)=>s+d.spend,0);
+    const totMargin = salesF.reduce((s,d)=>s+d.margin,0);
+    const blendedRoas = totSpend? (totRevenue/totSpend*100) : 0;
+
+    document.getElementById('mainKpis').innerHTML = `
+      <div class="kpi"><span class="label">선택 기간 매출</span><span class="value">${fmtWon(totRevenue)}</span><span class="sub">전체 판매채널 합산</span></div>
+      <div class="kpi"><span class="label">선택 기간 광고비</span><span class="value">${fmtWon(totSpend)}</span><span class="sub">전체 매체 합산</span></div>
+      <div class="kpi"><span class="label">Blended ROAS</span><span class="value">${fmtPct1(blendedRoas)}</span><span class="sub">손익분기 ${BREAKEVEN_ROAS}%${blendedRoas<BREAKEVEN_ROAS? '<span class="chip critical">미달</span>':''}</span></div>
+      <div class="kpi"><span class="label">선택 기간 공헌이익</span><span class="value" style="color:${totMargin<0?'var(--critical)':'var(--good)'}">${fmtWonSigned(totMargin)}</span><span class="sub">${totMargin<0?'적자':'흑자'}</span></div>
+    `;
+
+    drawGroupedBar(document.getElementById('chartRevSpend'), document.getElementById('tipRevSpend'), salesF, 'revenue','spend','var(--accent)','var(--text-muted)');
+    drawRoasLine(document.getElementById('chartRoas'), document.getElementById('tipRoas'), salesF);
+    drawMarginBar(document.getElementById('chartMargin'), document.getElementById('tipMargin'), salesF);
+
+    renderRankList(document.getElementById('channelRankList'), CHANNELS.map(c=>({
+      label: channelKor(c), value: salesF.reduce((s,d)=>s+(d.channels[c]||0),0), color: salesChannelColor(c)
+    })).filter(it=>it.value>0));
+    renderRankList(document.getElementById('productRankList'), PRODUCTS.map(p=>({
+      label: p, value: salesF.reduce((s,d)=>s+(d.products[p]||0),0), color: productColor(p)
+    })).filter(it=>it.value>0));
+
+    // ===== ads tab =====
+    // aggregate()(차트 함수 공용 헬퍼)가 기대하는 필드명(clk/convval)에 맞춰 정규화
+    const adRowsF = ADS.ad_daily_by_channel
+      .filter(d=> d.date>=range.start && d.date<=range.end)
+      .map(r=>({date:r.date, channel:r.channel, spend:r.spend, impr:r.impr, clk:r.clicks, conv:r.conv, convval:r.value}));
+    const adSpend = adRowsF.reduce((s,d)=>s+d.spend,0);
+    const adImpr = adRowsF.reduce((s,d)=>s+d.impr,0);
+    const adClk = adRowsF.reduce((s,d)=>s+d.clk,0);
+    const adConv = adRowsF.reduce((s,d)=>s+d.conv,0);
+    const adConvVal = adRowsF.reduce((s,d)=>s+d.convval,0);
+    const adRoas = adSpend? (adConvVal/adSpend*100) : 0;
+    const ctr = adImpr? (adClk/adImpr*100) : 0;
+    const cpc = adClk? (adSpend/adClk) : 0;
+    const cpm = adImpr? (adSpend/adImpr*1000) : 0;
+    const cpa = adConv? (adSpend/adConv) : 0;
+
+    document.getElementById('adKpis').innerHTML = `
+      <div class="kpi"><span class="label">총 광고비</span><span class="value">${fmtWon(adSpend)}</span><span class="sub">CTR ${fmtPct1(ctr)} · CPC ${fmtWon(cpc)}</span></div>
+      <div class="kpi"><span class="label">전환값</span><span class="value">${fmtWon(adConvVal)}</span><span class="sub">전환수 ${fmtNum(adConv)}건 · CPA ${adConv? fmtWon(cpa):'—'}</span></div>
+      <div class="kpi"><span class="label">미디어 ROAS</span><span class="value">${fmtPct1(adRoas)}</span><span class="sub">전환값 ÷ 광고비(픽셀 기준)</span></div>
+      <div class="kpi"><span class="label">노출 · 클릭</span><span class="value">${fmtNum(adImpr)}</span><span class="sub">클릭 ${fmtNum(adClk)}회 · CPM ${fmtWon(cpm)}</span></div>
+    `;
+
+    const byDate = aggregate(adRowsF, r=>r.date);
+    const adDaily = [...byDate.entries()].sort((a,b)=>a[0]<b[0]?-1:1).map(([date,v])=>({
+      date, ...v,
+      roas: v.spend? (v.convval/v.spend*100) : null,
+      cpm: v.impr? (v.spend/v.impr*1000) : null,
+      ctr: v.impr? (v.clk/v.impr*100) : null,
+      cpc: v.clk? (v.spend/v.clk) : null,
+    }));
+    drawDualLine(document.getElementById('chartAdTrend'), document.getElementById('tipAdTrend'), adDaily, 'spend','convval','var(--text-muted)','var(--good)','광고비','전환값');
+    drawMetricLine(document.getElementById('chartAdRoas'), document.getElementById('tipAdRoas'), adDaily, 'roas', 'var(--accent)', 'ROAS', v=>fmtPct1(v));
+    drawMetricLine(document.getElementById('chartAdCpm'), document.getElementById('tipAdCpm'), adDaily, 'cpm', 'var(--c-coupang)', 'CPM', v=>fmtNum(v));
+    drawMetricLine(document.getElementById('chartAdCtr'), document.getElementById('tipAdCtr'), adDaily, 'ctr', 'var(--c-naver-sa)', 'CTR', v=>fmtPct1(v));
+    drawMetricLine(document.getElementById('chartAdCpc'), document.getElementById('tipAdCpc'), adDaily, 'cpc', 'var(--c-naver-gfa)', 'CPC', v=>fmtNum(v));
+
+    const byChannel = aggregate(adRowsF, r=>r.channel);
+    const channelItems = [...byChannel.entries()].sort((a,b)=>b[1].spend-a[1].spend).map(([ch,v])=>({
+      label: channelLabel(ch), value: v.spend, color: channelColor(ch)
+    }));
+    renderRankList(document.getElementById('adRankList'), channelItems);
+
+    const chRows = [...byChannel.entries()].sort((a,b)=>b[1].spend-a[1].spend).map(([ch,v])=>{
+      const r_ctr = v.impr? (v.clk/v.impr*100):0;
+      const r_cpc = v.clk? (v.spend/v.clk):0;
+      const r_roas = v.spend? (v.convval/v.spend*100):0;
+      return `<tr><td>${channelLabel(ch)}</td><td>${fmtWon(v.spend)}</td><td>${fmtNum(v.impr)}</td><td>${fmtNum(v.clk)}</td><td>${fmtPct1(r_ctr)}</td><td>${fmtWon(r_cpc)}</td><td>${fmtWon(v.convval)}</td><td>${fmtPct1(r_roas)}</td></tr>`;
+    }).join('');
+    document.getElementById('adChannelTable').innerHTML = `
+      <thead><tr><th>매체</th><th>광고비</th><th>노출</th><th>클릭</th><th>CTR</th><th>CPC</th><th>전환값</th><th>ROAS</th></tr></thead>
+      <tbody>${chRows || '<tr><td colspan="8" style="text-align:center;color:var(--text-muted)">데이터 없음</td></tr>'}</tbody>`;
+
+    // 소재별 성과 — refresh.py가 전체 기간 누적으로 미리 집계해둔 값(기간 필터 미적용)
+    const creatives = (ADS.creatives_by_channel && ADS.creatives_by_channel[creativeChannel]) || [];
+    document.getElementById('creativeDesc').textContent = creatives.length
+      ? `전환값 상위순 · 전체 기간 누적 집계(기간 필터 미적용)`
+      : `${ADS.creative_channel_label[creativeChannel]||creativeChannel} 광고는 아직 소재 데이터가 없습니다 · 집행이 시작되면 자동으로 표시됩니다`;
+    const creativeRows = creatives.map(v=>{
+      return `<tr><td>${v.ad}</td><td>${fmtWon(v.spend)}</td><td>${fmtNum(v.impr)}</td><td>${fmtNum(v.clicks)}</td><td>${fmtPct1(v.ctr)}</td><td>${fmtNum(v.conv)}</td><td>${fmtWon(v.value)}</td><td>${fmtPct1(v.roas)}</td></tr>`;
+    }).join('');
+    document.getElementById('creativeTable').innerHTML = `
+      <thead><tr><th>소재</th><th>광고비</th><th>노출</th><th>클릭</th><th>CTR</th><th>전환수</th><th>전환값</th><th>ROAS</th></tr></thead>
+      <tbody>${creativeRows || '<tr><td colspan="8" style="text-align:center;color:var(--text-muted)">데이터 없음</td></tr>'}</tbody>`;
+  }
+
+  applyPreset('all');
+})();
+</script>

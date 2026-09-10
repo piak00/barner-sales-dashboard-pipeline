@@ -1,2 +1,3 @@
-dashboard_agg.json
+__pycache__/
 dashboard_output.html
+dashboard_agg.json

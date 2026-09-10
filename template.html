@@ -2173,13 +2173,35 @@ function drawMiniLineChart(cfg){
   if(points.length === 0){ svg.appendChild(g); return; }
 
   const allVals = points.flatMap(p=>cfg.series.map(s=>p[s.key]||0));
-  const maxVal = niceNumber(Math.max(...allVals, 0.0001) * 1.15);
+  const dataMax = Math.max(...allVals, 0.0001);
+  const dataMin = Math.min(...allVals, 0);
+
+  // 기본은 0 기준 자동 스케일(막대형 절대량 지표에 적합). ROAS/CPM/CTR/CPC처럼 값이
+  // 항상 일정 범위 위에서만 움직이는 비율 지표는 autoMin으로 바닥을 실제 데이터 근처까지
+  // 끌어올리거나, yMin/yMax로 보기 좋은 고정 범위를 줘서 변화폭이 더 잘 보이게 한다.
+  let minVal = 0, maxVal;
+  if(cfg.autoMin){
+    // 광고 집행 전/노출 없는 날은 값이 0으로 찍히는데, 이런 '데이터 없음' 0은
+    // 바닥 기준에서 제외해야 실제 지표가 움직이는 범위로 축이 좁혀진다.
+    const nonZeroVals = allVals.filter(v=>v>0);
+    const floorBase = nonZeroVals.length ? Math.min(...nonZeroVals) : dataMin;
+    const pad = Math.max((dataMax-floorBase)*0.15, dataMax*0.02, 0.0001);
+    minVal = Math.max(0, floorBase-pad);
+    maxVal = dataMax+pad;
+  } else {
+    maxVal = niceNumber(dataMax*1.15);
+  }
+  if(cfg.yMax != null) maxVal = cfg.yMax;
+  if(cfg.yMin != null) minVal = cfg.yMin;
+  if(minVal >= maxVal) minVal = 0;
+  const range = maxVal-minVal;
+
   const x = i => M.l + (points.length===1?0:(i/(points.length-1))*plotW);
-  const y = v => M.t + plotH - (v/maxVal)*plotH;
+  const y = v => M.t + plotH - ((Math.min(Math.max(v, minVal), maxVal)-minVal)/range)*plotH;
 
   const steps=4;
   for(let s=0;s<=steps;s++){
-    const val = maxVal/steps*s;
+    const val = minVal + (range/steps)*s;
     const yy=y(val);
     const line=document.createElementNS(ns,'line');
     line.setAttribute('x1',M.l); line.setAttribute('x2',W-M.r);
@@ -2208,9 +2230,9 @@ function drawMiniLineChart(cfg){
     let d = '';
     points.forEach((p,i)=>{ d += (i===0?'M ':'L ') + x(i) + ' ' + y(p[s.key]||0) + ' '; });
     if(cfg.series.length===1){
-      let area = `M ${x(0)} ${y(0)} `;
+      let area = `M ${x(0)} ${y(minVal)} `;
       points.forEach((p,i)=>{ area += `L ${x(i)} ${y(p[s.key]||0)} `; });
-      area += `L ${x(points.length-1)} ${y(0)} Z`;
+      area += `L ${x(points.length-1)} ${y(minVal)} Z`;
       const areaEl = document.createElementNS(ns,'path');
       areaEl.setAttribute('d',area); areaEl.setAttribute('fill',`var(${s.colorVar})`); areaEl.setAttribute('opacity','0.10');
       g.appendChild(areaEl);
@@ -2357,21 +2379,21 @@ function renderCafe24Tab(){
   })();
   drawMiniLineChart({
     svgId:'c24RoasChart', shellId:'c24RoasShell', tooltipId:'c24RoasTooltip', points: daily, leftMargin:44,
-    series:[{key:'roas', colorVar:'--accent', label:'ROAS'}],
+    series:[{key:'roas', colorVar:'--accent', label:'ROAS'}], yMax:300,
     yFmt: v => Math.round(v)+'%', tooltipFmt: v => fmtPct(v),
   });
   drawMiniLineChart({
-    svgId:'c24CpmChart', shellId:'c24CpmShell', tooltipId:'c24CpmTooltip', points: daily,
+    svgId:'c24CpmChart', shellId:'c24CpmShell', tooltipId:'c24CpmTooltip', points: daily, autoMin:true,
     series:[{key:'cpm', colorVar:'--pr-2', label:'CPM'}],
     yFmt: v => Math.round(v).toLocaleString('ko-KR'), tooltipFmt: v => fmtWon(v),
   });
   drawMiniLineChart({
-    svgId:'c24CtrChart', shellId:'c24CtrShell', tooltipId:'c24CtrTooltip', points: daily, leftMargin:44,
+    svgId:'c24CtrChart', shellId:'c24CtrShell', tooltipId:'c24CtrTooltip', points: daily, leftMargin:44, autoMin:true,
     series:[{key:'ctr', colorVar:'--pr-3', label:'CTR'}],
     yFmt: v => v.toLocaleString('ko-KR',{maximumFractionDigits:1})+'%', tooltipFmt: v => fmtPct(v),
   });
   drawMiniLineChart({
-    svgId:'c24CpcChart', shellId:'c24CpcShell', tooltipId:'c24CpcTooltip', points: daily,
+    svgId:'c24CpcChart', shellId:'c24CpcShell', tooltipId:'c24CpcTooltip', points: daily, autoMin:true,
     series:[{key:'cpc', colorVar:'--pr-4', label:'CPC'}],
     yFmt: v => Math.round(v).toLocaleString('ko-KR'), tooltipFmt: v => fmtWon(v),
   });

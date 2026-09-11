@@ -297,6 +297,20 @@ def main():
         "<title>바르너 매출 대시보드</title>",
         "<title>매출 대시보드 (템플릿)</title>",
     )
+
+    # template.html 하단 안내문에 실제 원본 건수가 텍스트로 하드코딩돼 있어(DATA JSON과
+    # 무관하게 그대로 남음) 합성 데이터의 실제 건수로 다시 바꿔준다.
+    revenue_count = len(revenue_rows) - 1
+    qty_count = len(qty_rows) - 1
+    ads_count = len(ads_rows) - 1
+    sku_count = len(master_rows) - 1
+    output = (
+        output
+        .replace("44,400건", f"{revenue_count:,}건")
+        .replace("53,586건", f"{qty_count:,}건")
+        .replace("154,639건", f"{ads_count:,}건")
+        .replace("22개 SKU", f"{sku_count}개 SKU")
+    )
     OUTPUT_PATH.write_text(output, encoding="utf-8")
     print("wrote", OUTPUT_PATH, "size", len(output))
     print("grand_total(revenue)=", agg["grand_total"], "grand_spend(ads)=", agg["ads"]["grand_spend"])

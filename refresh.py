@@ -93,6 +93,26 @@ def fetch_csv(gid: str) -> list[list[str]]:
     return rows
 
 
+def dedupe_rows(rows: list[list[str]]) -> list[list[str]]:
+    """헤더는 그대로 두고, 완전히 동일한 데이터 행이 중복되면 첫 번째만 남긴다.
+
+    원본 시트에 특정 날짜 전체가 통째로 두 번 붙여넣어지는 사고가 가끔 있는데(예:
+    광고비가 특정 날만 유독 2배로 튀는 경우), 이런 경우 그대로 집계하면 지출/노출/
+    전환값이 전부 실제의 배수로 부풀려진다. 완전 동일한 행이 반복되는 것은 정상적인
+    개별 거래/소재 로그에서는 사실상 나오지 않으므로 안전하게 제거한다.
+    """
+    header, *data = rows
+    seen = set()
+    deduped = []
+    for row in data:
+        key = tuple(row)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(row)
+    return [header, *deduped]
+
+
 def parse_won(s: str) -> float:
     s = (s or "").strip()
     if not s:
@@ -398,7 +418,13 @@ def build_channel_products(ad_rows: list[list[str]], revenue_rows: list[list[str
         date, ch = row[1], row[2]
         if ch != sales_channel:
             continue
-        product = row[10].strip() or '미매핑 (분류 안 됨)'
+        prod_raw = row[10].strip()
+        # 프로모션(매출구분) 거래는 여러 제품이 섞인 묶음이라 단일 제품명이 항상 비어있는데,
+        # 그대로 두면 '미매핑'에 묻혀 광고 쪽 '프로모션(복수제품)' 태그와 매출이 연결되지 않는다.
+        if not prod_raw and row[12].strip() == '프로모션':
+            product = AD_PROMOTION
+        else:
+            product = prod_raw or '미매핑 (분류 안 됨)'
         rev_daily[date][product] += parse_won(row[15])
 
     rev_daily_rows = []
@@ -649,7 +675,7 @@ def main():
     print("fetching 표준제품_MASTER ...")
     master_rows = fetch_csv(GIDS["product_master"])
     print("fetching 바르너_광고소재 ...")
-    ads_rows = fetch_csv(GIDS["ads"])
+    ads_rows = dedupe_rows(fetch_csv(GIDS["ads"]))
     print("fetching 자사몰 월별 목표 매출 ...")
     target_rows = fetch_csv(GIDS["targets"])
 

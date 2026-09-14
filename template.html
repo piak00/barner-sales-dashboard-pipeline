@@ -2348,6 +2348,20 @@ function channelDailySeries(adRows, revRows){
   });
 })();
 
+// '제품별 광고비·매출·ROAS' 표를 '이번 달 목표 대비 실적' 표와 같은 제품 그룹으로 맞춘다
+// (refresh.py의 TARGET_LABEL_TO_PRODUCT/TARGET_KEEP_SEPARATE_LABELS와 동일한 그룹핑)
+const C24_PRODUCT_TO_GROUP = {
+  'EMS 미니스팟': '미니스팟',
+  '아치스본 슬리퍼': '아치스본 슬리퍼',
+  '아치스본 스포츠': '아치스본 스포츠',
+  '아치스본 밸런스': '아치스본 밸런스',
+  '바디괄사 세럼': '괄사세럼',
+  '지압 스텝퍼': '스텝퍼',
+  '클리어풋 제로 파우더': '풋파우더',
+  '프로모션(복수제품)': '프로모션 매출',
+};
+function c24ProductGroup(name){ return C24_PRODUCT_TO_GROUP[name] || '기타'; }
+
 function renderCafe24Tab(){
   const { start, end } = filterState;
   let adRows = FULL.cafe24Ad.filter(r=>inRange(r.date, start, end));
@@ -2406,11 +2420,11 @@ function renderCafe24Tab(){
     return byProduct.get(name);
   }
   adRows.forEach(r=>{
-    const p = ensure(r.product);
+    const p = ensure(c24ProductGroup(r.product));
     p.spend += r.spend; p.impr += r.impr; p.clicks += r.clicks; p.conv += r.conv; p.value += r.value;
   });
   revRows.forEach(r=>{
-    ensure(r.product).revenue += r.revenue;
+    ensure(c24ProductGroup(r.product)).revenue += r.revenue;
   });
 
   const totalSpend = Array.from(byProduct.values()).reduce((s,p)=>s+p.spend,0);
@@ -2424,13 +2438,10 @@ function renderCafe24Tab(){
   document.getElementById('c24KpiRoas').textContent = fmtPct(roas);
   document.getElementById('c24KpiRoasSub').textContent = totalSpend ? `매출이 광고비의 ${(roas/100).toLocaleString('ko-KR',{maximumFractionDigits:1})}배` : '-';
 
-  const unclassified = DATA.cafe24.ad_unclassified_label;
   const rows = Array.from(byProduct.entries())
-    .filter(([name])=> name !== unclassified && name !== '미매핑 (분류 안 됨)')
+    .filter(([name])=> name !== '기타')
     .sort((a,b)=>b[1].revenue-a[1].revenue);
-  const trailing = [unclassified, '미매핑 (분류 안 됨)']
-    .map(name=>[name, byProduct.get(name)])
-    .filter(([,p])=>p);
+  const trailing = byProduct.has('기타') ? [['기타', byProduct.get('기타')]] : [];
 
   const table = document.getElementById('c24ProductTable');
   const thead = '<thead><tr><th>제품</th><th>광고비</th><th>매출</th><th>ROAS</th><th>CPM</th><th>CTR</th><th>CVR</th></tr></thead>';

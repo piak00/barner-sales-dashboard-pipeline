@@ -139,7 +139,14 @@ def parse_pct_or_num(s: str) -> float:
 
 def build_revenue(rows: list[list[str]]):
     header, *data = rows
-    data = [r for r in data if len(r) > 15 and r[1].strip() and r[2].strip()]
+    # 시트 수식이 실제 데이터 범위보다 아래로 드래그돼 있으면 #N/A로 채워진 빈 행이
+    # 나오는데(모든 컬럼이 #N/A), 판매처가 유효 채널이 아닌 행은 여기서 걸러야
+    # 이후 제품별 매출 집계에서 parse_won이 '#N/A' 같은 값에 크래시하지 않는다.
+    data = [
+        r for r in data
+        if len(r) > 15 and r[1].strip() and r[2].strip()
+        and CH_MAP_RAW.get(r[2].strip(), r[2].strip()) in CHANNEL_ORDER
+    ]
 
     daily = defaultdict(lambda: defaultdict(float))
     dates = set()

@@ -82,6 +82,7 @@ def build_revenue(rows: list[list[str]]):
 
     daily = defaultdict(lambda: defaultdict(float))
     prod_daily = defaultdict(lambda: defaultdict(float))
+    prod_daily_cafe24 = defaultdict(lambda: defaultdict(float))  # 자사몰(CAFE24) 탭 전용 — 채널 한정 제품별 매출
     dates, channels_seen, products_seen = set(), set(), set()
     for row in data:
         date, ch = row[COL_DATE], row[COL_CHANNEL]
@@ -93,6 +94,8 @@ def build_revenue(rows: list[list[str]]):
         if prod:
             prod_daily[date][prod] += amt
             products_seen.add(prod)
+            if ch == SELF_MALL_CHANNEL:
+                prod_daily_cafe24[date][prod] += amt
     dates = sorted(dates)
     # 채널 순서: 자사몰을 항상 맨 앞에, 나머지는 누적 매출 내림차순 (신규 채널이 생기면 자동으로 뒤에 붙는다)
     channel_totals_tmp = {c: sum(daily[d].get(c, 0) for d in dates) for c in channels_seen}
@@ -110,11 +113,13 @@ def build_revenue(rows: list[list[str]]):
         r["total"] = sum(r[c] for c in channel_order)
         for p in product_order:
             r["product__" + p] = round(prod_daily[dt].get(p, 0))
+            r["product_cafe24__" + p] = round(prod_daily_cafe24[dt].get(p, 0))
         daily_series.append(r)
 
     channel_totals = {c: round(channel_totals_tmp.get(c, 0)) for c in channel_order}
     grand_total = sum(channel_totals.values())
     product_totals = {p: round(sum(prod_daily[d].get(p, 0) for d in dates)) for p in product_order}
+    product_totals_cafe24 = {p: round(sum(prod_daily_cafe24[d].get(p, 0) for d in dates)) for p in product_order}
 
     return {
         "channels": channel_order,
@@ -122,6 +127,7 @@ def build_revenue(rows: list[list[str]]):
         "daily_series": daily_series,
         "channel_totals": channel_totals,
         "product_totals": product_totals,
+        "product_totals_cafe24": product_totals_cafe24,
         "grand_total": grand_total,
         "meta": {"revenue_date_range": [dates[0], dates[-1]] if dates else None},
     }

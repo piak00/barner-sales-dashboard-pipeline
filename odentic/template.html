@@ -634,7 +634,7 @@
         return `<div class="t-date">${d.date}</div>
           <div class="t-row"><span>매출</span><b>${fmtWon(d[k1])}</b></div>
           <div class="t-row"><span>광고비</span><b>${fmtWon(d[k2])}</b></div>
-          <div class="t-row"><span>ROAS</span><b>${d.roas!=null? d.roas+'%':'—'}</b></div>`;
+          <div class="t-row"><span>ROAS</span><b>${d.roas!=null? fmtPct1(d.roas):'—'}</b></div>`;
       });
     });
   }

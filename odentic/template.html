@@ -676,7 +676,7 @@
       bindTip(el, tip)(()=>{
         const d = data[+el.dataset.i];
         return `<div class="t-date">${d.date}</div>
-          <div class="t-row"><span>ROAS</span><b>${d.roas}%</b></div>
+          <div class="t-row"><span>ROAS</span><b>${fmtPct1(d.roas)}</b></div>
           <div class="t-row"><span>손익분기 대비</span><b>${Math.round(d.roas/BREAKEVEN_ROAS*100)}%</b></div>`;
       });
     });
@@ -850,7 +850,7 @@
     // (향후 매체별로 판매채널이 나뉘면 이 값도 채널별로 분리해서 계산해야 한다.)
     const cafe24Daily = salesF.map(d=>({
       date: d.date, cafe24Revenue: d.channels[SELF_MALL_CHANNEL]||0, spend: d.spend,
-      roas: d.spend? ((d.channels[SELF_MALL_CHANNEL]||0)/d.spend*100) : null,
+      roas: d.spend? Math.round((d.channels[SELF_MALL_CHANNEL]||0)/d.spend*1000) / 10 : null,
     }));
     const cafe24Revenue = cafe24Daily.reduce((s,d)=>s+d.cafe24Revenue,0);
     const cafe24Spend = cafe24Daily.reduce((s,d)=>s+d.spend,0);

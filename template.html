@@ -2608,7 +2608,7 @@ function renderCafe24Targets(){
 
   const table = document.getElementById('c24TargetTable');
   const thead = '<thead><tr><th>제품</th><th>목표 매출</th><th>실제 매출</th><th>달성율</th></tr></thead>';
-  const rows = t.products.filter(p => p.target > 0 || p.untrackable);
+  const rows = t.products.filter(p => p.target > 0 || p.actual > 0);
   function rowHtml(p){
     if(p.untrackable){
       return `<tr><td>${escapeHtml(p.label)}</td><td>${fmtWon(p.target)}</td><td>-</td><td><span title="여러 제품이 섞인 묶음성 목표라 제품별 실적 추적 불가">추적 불가</span></td></tr>`;

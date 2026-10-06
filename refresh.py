@@ -468,7 +468,7 @@ TARGET_LABEL_TO_PRODUCT = {
 BUNDLE_LABEL_TO_SALES_TYPE = {'프로모션 매출': '프로모션', '공구': '공구'}
 # 신규브랜드-자사몰(오덴틱 치약 라인)과 그 하위 제품(바르너가 아닌 별도 신규 브랜드),
 # 그리고 자사몰 채널 밖이라 실적을 아예 집계할 수 없는 '기타 (외부 공구)'는 표에서 제외
-TARGET_EXCLUDED_LABELS = {'신규브랜드-자사몰', '블랙 치약', '핑크 치약', '액상 치약', '기타 (외부 공구)'}
+TARGET_EXCLUDED_LABELS = {'신규브랜드-자사몰', '오덴틱-자사몰', '블랙 치약', '핑크 치약', '액상 치약', '기타 (외부 공구)'}
 # 이 라벨들만 표에서 단독 행으로 남기고, 나머지 제품은 모두 '기타'로 합산
 # (스텝퍼는 광고 집행을 안 해서 제외 — '기타'로 묶임)
 TARGET_KEEP_SEPARATE_LABELS = {
@@ -566,7 +566,6 @@ def build_targets(rows: list[list[str]], cafe24_revenue_daily: list[dict], bundl
 
         if pt["label"] not in TARGET_KEEP_SEPARATE_LABELS:
             other_target += target_amt
-            other_actual += actual_amt
             continue
 
         products.append({
@@ -577,6 +576,14 @@ def build_targets(rows: list[list[str]], cafe24_revenue_daily: list[dict], bundl
             "achievement_pct": round(actual_amt / target_amt * 100, 1) if target_amt else None,
             "untrackable": False,
         })
+    # '기타' 실적은 단독 행으로 남긴 제품과 프로모션 묶음(AD_PROMOTION)을 뺀 나머지 전부 —
+    # 목표 시트에 행이 없는 제품과 아직 단일 제품으로 매핑 안 된('미매핑') 매출까지 포함해
+    # 표의 합계가 KPI 실제 매출과 맞도록 한다.
+    kept_products = {TARGET_LABEL_TO_PRODUCT[l] for l in TARGET_KEEP_SEPARATE_LABELS if l in TARGET_LABEL_TO_PRODUCT}
+    other_actual = sum(
+        amt for prod, amt in actual_by_product.items()
+        if prod not in kept_products and prod != AD_PROMOTION
+    )
     if other_target or other_actual:
         products.append({
             "label": "기타",

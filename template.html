@@ -2411,31 +2411,61 @@ function renderCafe24Tab(){
     yFmt: v => Math.round(v).toLocaleString('ko-KR'), tooltipFmt: v => fmtWon(v),
   });
 
-  const byProduct = new Map();
-  function ensure(name){
-    if(!byProduct.has(name)){
-      byProduct.set(name, { spend:0, impr:0, clicks:0, conv:0, value:0, revenue:0 });
-    }
-    return byProduct.get(name);
+  function groupByProduct(ads, revs){
+    const m = new Map();
+    const ensure = name => {
+      if(!m.has(name)) m.set(name, { spend:0, impr:0, clicks:0, conv:0, value:0, revenue:0 });
+      return m.get(name);
+    };
+    ads.forEach(r=>{
+      const p = ensure(c24ProductGroup(r.product));
+      p.spend += r.spend; p.impr += r.impr; p.clicks += r.clicks; p.conv += r.conv; p.value += r.value;
+    });
+    revs.forEach(r=>{ ensure(c24ProductGroup(r.product)).revenue += r.revenue; });
+    return m;
   }
-  adRows.forEach(r=>{
-    const p = ensure(c24ProductGroup(r.product));
-    p.spend += r.spend; p.impr += r.impr; p.clicks += r.clicks; p.conv += r.conv; p.value += r.value;
-  });
-  revRows.forEach(r=>{
-    ensure(c24ProductGroup(r.product)).revenue += r.revenue;
-  });
+  const sumOf = (m, key) => Array.from(m.values()).reduce((s,p)=>s+p[key],0);
 
-  const totalSpend = Array.from(byProduct.values()).reduce((s,p)=>s+p.spend,0);
-  const totalRevenue = Array.from(byProduct.values()).reduce((s,p)=>s+p.revenue,0);
+  const byProduct = groupByProduct(adRows, revRows);
+  const totalSpend = sumOf(byProduct, 'spend');
+  const totalRevenue = sumOf(byProduct, 'revenue');
 
-  document.getElementById('c24KpiRevenue').textContent = fmtEok(totalRevenue);
-  document.getElementById('c24KpiRevenueSub').textContent = `${start} ~ ${end}`;
-  document.getElementById('c24KpiSpend').textContent = fmtEok(totalSpend);
-  document.getElementById('c24KpiSpendSub').textContent = `${start} ~ ${end}`;
+  // 이전 기간과 비교: 상단 기간 필터의 비교 설정을 그대로 따른다 (제품 선택도 동일하게 적용)
+  let cmpByProduct = null;
+  if(filterState.compare && filterState.cStart && filterState.cEnd){
+    let cAd = FULL.cafe24Ad.filter(r=>inRange(r.date, filterState.cStart, filterState.cEnd));
+    let cRev = FULL.cafe24Rev.filter(r=>inRange(r.date, filterState.cStart, filterState.cEnd));
+    if(scopedToProduct){
+      cAd = cAd.filter(r=>r.product === c24SelectedProduct);
+      cRev = cRev.filter(r=>r.product === c24SelectedProduct);
+    }
+    cmpByProduct = groupByProduct(cAd, cRev);
+  }
+  const cmpSpend = cmpByProduct ? sumOf(cmpByProduct, 'spend') : null;
+  const cmpRevenue = cmpByProduct ? sumOf(cmpByProduct, 'revenue') : null;
   const roas = totalSpend ? totalRevenue/totalSpend*100 : 0;
+  const cmpRoas = cmpByProduct && cmpSpend ? cmpRevenue/cmpSpend*100 : null;
+
+  const periodSub = cmpByProduct
+    ? `${start} ~ ${end} (비교 ${filterState.cStart} ~ ${filterState.cEnd})`
+    : `${start} ~ ${end}`;
+  document.getElementById('c24KpiRevenue').textContent = fmtEok(totalRevenue);
+  document.getElementById('c24KpiRevenueSub').textContent = periodSub;
+  document.getElementById('c24KpiSpend').textContent = fmtEok(totalSpend);
+  document.getElementById('c24KpiSpendSub').textContent = periodSub;
   document.getElementById('c24KpiRoas').textContent = fmtPct(roas);
   document.getElementById('c24KpiRoasSub').textContent = totalSpend ? `매출이 광고비의 ${(roas/100).toLocaleString('ko-KR',{maximumFractionDigits:1})}배` : '-';
+  appendDeltaBadge('c24KpiRevenue', totalRevenue, cmpRevenue);
+  appendDeltaBadge('c24KpiSpend', totalSpend, cmpSpend);
+  appendDeltaBadge('c24KpiRoas', roas, cmpRoas, {points:true});
+
+  function deltaHtml(cur, cmp, opts){
+    if(cmp == null || !cmp) return '';
+    opts = opts || {};
+    const diff = opts.points ? (cur-cmp) : (cur-cmp)/cmp*100;
+    const good = opts.invert ? diff <= 0 : diff >= 0;
+    return `<span class="delta-badge ${good?'':'down'}">${diff>=0?'+':''}${diff.toLocaleString('ko-KR',{maximumFractionDigits:1})}${opts.points?'%p':'%'}</span>`;
+  }
 
   const rows = Array.from(byProduct.entries())
     .filter(([name])=> name !== '기타')
@@ -2450,7 +2480,12 @@ function renderCafe24Tab(){
     const ctr = p.impr ? p.clicks/p.impr*100 : null;
     const cvr = p.clicks ? p.conv/p.clicks*100 : null;
     const fmt1 = v => v==null ? '-' : v.toLocaleString('ko-KR',{maximumFractionDigits:1})+'%';
-    return `<tr><td>${name}</td><td>${fmtWon(p.spend)}</td><td>${fmtWon(p.revenue)}</td><td>${fmt1(roasByRevenue)}</td><td>${p.impr? fmtWon(Math.round(cpm)) : '-'}</td><td>${fmt1(ctr)}</td><td>${fmt1(cvr)}</td></tr>`;
+    const c = cmpByProduct ? cmpByProduct.get(name) : null;
+    const dSpend = c ? deltaHtml(p.spend, c.spend) : '';
+    const dRev = c ? deltaHtml(p.revenue, c.revenue) : '';
+    const cRoas = c && c.spend ? c.revenue/c.spend*100 : null;
+    const dRoas = c && roasByRevenue != null ? deltaHtml(roasByRevenue, cRoas, {points:true}) : '';
+    return `<tr><td>${name}</td><td>${fmtWon(p.spend)}${dSpend}</td><td>${fmtWon(p.revenue)}${dRev}</td><td>${fmt1(roasByRevenue)}${dRoas}</td><td>${p.impr? fmtWon(Math.round(cpm)) : '-'}</td><td>${fmt1(ctr)}</td><td>${fmt1(cvr)}</td></tr>`;
   }
   let tbody = '<tbody>' + rows.map(rowHtml).join('') + trailing.map(rowHtml).join('') + '</tbody>';
   table.innerHTML = thead + tbody;

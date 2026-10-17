@@ -248,8 +248,11 @@
       <span class="filter-label">기간</span>
       <select id="rangePreset">
         <option value="all">전체 기간</option>
-        <option value="7d">최근 7일</option>
+        <option value="yesterday">어제</option>
         <option value="3d">최근 3일</option>
+        <option value="7d">최근 7일</option>
+        <option value="thisMonth">이번 달</option>
+        <option value="lastMonth">지난 달</option>
         <option value="custom">사용자 지정</option>
       </select>
       <input type="date" id="rangeStart" class="date-input">
@@ -532,6 +535,13 @@
     if(v==='all'){ range = {start: MIN_DATE, end: MAX_DATE}; }
     else if(v==='7d'){ range = {start: clampDate(addDays(MAX_DATE,-6)), end: MAX_DATE}; }
     else if(v==='3d'){ range = {start: clampDate(addDays(MAX_DATE,-2)), end: MAX_DATE}; }
+    else if(v==='yesterday'){ range = {start: MAX_DATE, end: MAX_DATE}; }
+    else if(v==='thisMonth'){ range = {start: clampDate(MAX_DATE.slice(0,8)+'01'), end: MAX_DATE}; }
+    else if(v==='lastMonth'){
+      const thisMonthStart = MAX_DATE.slice(0,8)+'01';
+      const lastMonthEnd = addDays(thisMonthStart,-1);
+      range = {start: clampDate(lastMonthEnd.slice(0,8)+'01'), end: clampDate(lastMonthEnd)};
+    }
     startInput.value = range.start; endInput.value = range.end;
     render();
   }

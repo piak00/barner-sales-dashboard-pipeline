@@ -739,6 +739,16 @@
     <section class="card">
       <div class="card-head">
         <div>
+          <h2 class="card-title">제품별 광고비 · 매출 · ROAS</h2>
+          <p class="card-desc">올리브영(OLIVE_YOUNG)에 매핑된 광고 소재만 집계 — 캠페인/광고세트/광고명에서 제품을 키워드로 추정합니다. 매출은 결제금액(-vat) 기준.</p>
+        </div>
+      </div>
+      <div class="tbl-scroll"><table id="oyProductTable"></table></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
           <h2 class="card-title">매출 · 광고비 추이</h2>
           <p class="card-desc" id="oyTrendDesc">올리브영(OLIVE_YOUNG)에 매핑된 광고 소재 기준 일별 광고비와 매출(결제금액(-vat) 기준).</p>
         </div>
@@ -787,6 +797,16 @@
     <section class="card">
       <div class="card-head">
         <div>
+          <h2 class="card-title">제품별 매출</h2>
+          <p class="card-desc" id="oyProdRevDesc">-</p>
+        </div>
+      </div>
+      <div class="rank-list" id="oyProdRevList"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
           <h2 class="card-title">위너 소재</h2>
           <p class="card-desc" id="oyWinnerDesc">광고비 상위 소재 중 전환값 순위. 상단에서 선택한 기간을 그대로 따릅니다.</p>
         </div>
@@ -795,15 +815,6 @@
       <div class="tbl-scroll"><table id="oyWinnerTable"></table></div>
     </section>
 
-    <section class="card">
-      <div class="card-head">
-        <div>
-          <h2 class="card-title">제품별 광고비 · 매출 · ROAS</h2>
-          <p class="card-desc">올리브영(OLIVE_YOUNG)에 매핑된 광고 소재만 집계 — 캠페인/광고세트/광고명에서 제품을 키워드로 추정합니다. 매출은 결제금액(-vat) 기준.</p>
-        </div>
-      </div>
-      <div class="tbl-scroll"><table id="oyProductTable"></table></div>
-    </section>
   </div>
 
   <footer class="notes">
@@ -1460,7 +1471,8 @@ renderStackTable();
 /* ============================================================
    ranked bar list (shared by channel share / product revenue / ad channel)
    ============================================================ */
-function renderRankList(containerId, items){
+function renderRankList(containerId, items, fmt){
+  fmt = fmt || fmtEok;
   const wrap = document.getElementById(containerId);
   wrap.innerHTML = '';
   const total = items.reduce((s,r)=>s+r.amount, 0);
@@ -1473,9 +1485,15 @@ function renderRankList(containerId, items){
     fill.style.background = `var(${item.colorVar})`;
     track.appendChild(fill);
     const vals = document.createElement('div'); vals.className='rank-vals';
-    const amt = document.createElement('span'); amt.className='amt'; amt.textContent = fmtEok(item.amount);
+    const amt = document.createElement('span'); amt.className='amt'; amt.textContent = fmt(item.amount);
     const pct = document.createElement('span'); pct.className='pct'; pct.textContent = '('+fmtPct(total? item.amount/total*100 : 0)+')';
     vals.append(amt,pct);
+    if(item.cmp != null && item.cmp > 0){
+      const diff = (item.amount-item.cmp)/item.cmp*100;
+      const b = document.createElement('span'); b.className = 'delta-badge' + (diff>=0?'':' down');
+      b.textContent = (diff>=0?'+':'') + diff.toLocaleString('ko-KR',{maximumFractionDigits:1}) + '%';
+      vals.appendChild(b);
+    }
     row.append(name, track, vals);
     wrap.appendChild(row);
     requestAnimationFrame(()=>{ fill.style.width = (item.amount/max*100)+'%'; });
@@ -2533,6 +2551,22 @@ function renderOliveYoungTab(){
   document.getElementById('oyTrendDesc').textContent = scopedToProduct
     ? `"${oySelectedProduct}" 제품에 매핑된 광고 소재 기준 일별 광고비와 매출(결제금액(-vat) 기준).`
     : '올리브영(OLIVE_YOUNG)에 매핑된 광고 소재 기준 일별 광고비와 매출(결제금액(-vat) 기준).';
+
+  // 제품별 매출 (제품 선택기와 무관하게 선택 기간의 전체 제품을 보여준다)
+  const oyProdTotals = (a, b) => {
+    const m = new Map();
+    FULL.oyRev.forEach(r=>{ if(inRange(r.date, a, b)) m.set(r.product, (m.get(r.product)||0) + r.revenue); });
+    return m;
+  };
+  const oyCur = oyProdTotals(start, end);
+  const oyCmp = (filterState.compare && filterState.cStart && filterState.cEnd) ? oyProdTotals(filterState.cStart, filterState.cEnd) : null;
+  const fmtMan = v => Math.round(v/1e4).toLocaleString('ko-KR') + '만원';
+  const oyItems = Array.from(oyCur.entries()).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1])
+    .map(([name,amount],i)=>({ name: name==='미매핑 (분류 안 됨)' ? '미매핑(분류 안 됨)' : name, amount, colorVar: PR_COLORS[i % PR_COLORS.length], cmp: oyCmp ? (oyCmp.get(name)||0) : null }));
+  document.getElementById('oyProdRevDesc').textContent =
+    `${start} ~ ${end} 올리브영 매출 기준(결제금액(-vat))` + (oyCmp ? ` · 비교: ${filterState.cStart} ~ ${filterState.cEnd} 대비 증감` : '');
+  if(oyItems.length){ renderRankList('oyProdRevList', oyItems, fmtMan); }
+  else { document.getElementById('oyProdRevList').innerHTML = '<div style="color:var(--text-muted); font-size:12.5px;">이 기간에는 올리브영 매출이 없습니다</div>'; }
 
   const daily = channelDailySeries(adRows, revRows);
   drawMiniLineChart({

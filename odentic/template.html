@@ -696,24 +696,30 @@
   function drawMarginBar(svg, tip, data){
     const W=600,H=200, padL=62, padR=12, padT=14, padB=28;
     const innerW=W-padL-padR, innerH=H-padT-padB;
-    const maxAbs = Math.max(1, ...data.map(d=>Math.abs(d.margin))) * 1.1;
+    const top = Math.max(0, ...data.map(d=>d.margin)) * 1.1;
+    const bot = Math.max(0, ...data.map(d=>-d.margin)) * 1.1;
+    const span = (top+bot) || 1;
     const n = data.length;
     const groupW = innerW/n, barW = groupW*0.5;
-    const yZero = padT;
-    const y = v => yZero + (Math.abs(v)/maxAbs)*innerH;
+    const y = v => padT + (top - v)/span*innerH;
+    const yZero = y(0);
+    const rawStep = span/4, mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    const step = [1,2,5,10].map(m=>m*mag).find(st=>st>=rawStep);
+    const fmtTick = v => (v<0?'-':'') + (Math.abs(v)>=10000? Math.round(Math.abs(v)/10000)+'만' : Math.round(Math.abs(v)));
     let s='';
-    for(let i=1;i<=3;i++){
-      const v=maxAbs/3*i, yy=y(-v);
+    for(let t=Math.ceil(-bot/step)*step; t<=top+1e-9; t+=step){
+      if(Math.abs(t)<1e-9) continue;
+      const yy=y(t);
       s += `<line class="gridline" x1="${padL}" x2="${W-padR}" y1="${yy}" y2="${yy}"/>`;
-      s += `<text class="axis-text" x="${padL-8}" y="${yy+3}" text-anchor="end">-${v>=10000?Math.round(v/10000)+'만':Math.round(v)}</text>`;
+      s += `<text class="axis-text" x="${padL-8}" y="${yy+3}" text-anchor="end">${fmtTick(t)}</text>`;
     }
     s += `<line class="axis-line" x1="${padL}" x2="${W-padR}" y1="${yZero}" y2="${yZero}"/>`;
     s += `<text class="axis-text" x="${padL-8}" y="${yZero+3}" text-anchor="end">0</text>`;
     data.forEach((d,i)=>{
       const gx=padL+groupW*i, cx=gx+groupW/2;
-      const bh = y(d.margin)-yZero;
       const positive = d.margin>0;
-      s += `<rect class="bar" x="${cx-barW/2}" y="${positive? yZero-bh : yZero}" width="${barW}" height="${Math.abs(bh)}" rx="3" fill="${positive?'var(--good)':'var(--critical)'}"/>`;
+      const yv = y(d.margin);
+      s += `<rect class="bar" x="${cx-barW/2}" y="${Math.min(yv,yZero)}" width="${barW}" height="${Math.max(Math.abs(yv-yZero),1)}" rx="3" fill="${positive?'var(--good)':'var(--critical)'}"/>`;
       s += `<rect class="hit" x="${gx+1}" y="${padT}" width="${groupW-2}" height="${innerH}" data-i="${i}"/>`;
       s += `<text class="axis-text" x="${cx}" y="${H-8}" text-anchor="middle">${d.date.slice(5)}</text>`;
     });
